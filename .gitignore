@@ -47,6 +47,11 @@ web_modules/
 # TypeScript cache
 *.tsbuildinfo
 
+# Other package manager lockfiles — this project uses bun
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 # Optional npm cache directory
 .npm
 
