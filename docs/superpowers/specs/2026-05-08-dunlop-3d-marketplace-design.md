@@ -5,11 +5,15 @@
 **Author:** working session with Efra
 **Repository:** /Users/3fra/dev/dunlop
 
+**Revisions**
+- 2026-05-08 — Camera/composition revised from a rotatable 3D room to a fixed **2D orthographic framing of 3D objects**. The frame is the canvas; objects animate inside it. Trade-off: lose user-driven rotation; gain creative latitude on animation, choreography, and composition.
+- 2026-05-08 — Checkout revised from redirect-to-hosted-BigCommerce to a **custom first-party checkout on the same BigCommerce backend**. Adds scope (now its own milestone) but preserves the diegetic frame through the entire purchase flow.
+
 ## Overview
 
-Rebuild jimdunlop.com as a Three.js-based diegetic marketplace: a single, orthographic, Animal-Crossing-style room where every product category is represented by a physical object, the cart is an actual basket sitting in the room, and editorial/heritage content surfaces contextually when a user picks up the object it relates to. The goal is a brand experience that is also fully transactional, with no friction tax for shoppers who just want to buy.
+Rebuild jimdunlop.com as a Three.js-based diegetic marketplace: a **2D orthographic composition of 3D objects** — a fixed-frame studio still life rather than a navigable room — where every product category is represented by a physical object, the cart is an actual basket sitting in the frame, and editorial/heritage content surfaces contextually when a user picks up the object it relates to. The 2D framing means the camera is the staging, not a free-floating viewpoint; 3D objects living inside that frame are free to rotate, lift, hover, jiggle, fly between cells, and inspect themselves with real depth. The goal is a brand experience that is also fully transactional, with no friction tax for shoppers who just want to buy.
 
-The existing site is a BigCommerce + Stencil store. The new front-end is a "head" on top of that backend — we read live catalog data from BigCommerce's public Storefront GraphQL API, build the cart via BigCommerce's Cart API, and hand off checkout to BigCommerce's hosted checkout. We do not replace the commerce backend.
+The existing site is a BigCommerce + Stencil store. The new front-end is a "head" on top of that backend — we read live catalog data from BigCommerce's public Storefront GraphQL API and drive cart + checkout via BigCommerce's APIs. **Checkout itself is custom-built into the diegetic experience** (no redirect to BigCommerce's hosted checkout): same backend, our own UI, payments tokenized client-side so we stay out of PCI scope. We do not replace the commerce backend.
 
 ## Goals
 
@@ -21,13 +25,13 @@ The existing site is a BigCommerce + Stencil store. The new front-end is a "head
 
 ## Non-goals
 
-- Replacing or migrating BigCommerce.
-- Building our own checkout / payments / tax engine.
-- Walkable first-person navigation.
+- Replacing or migrating BigCommerce. Checkout *UI* is ours; payments, tax, fulfillment, inventory, and order management stay on BC.
+- Building a payment processor or holding card data ourselves — payment fields are tokenized via BC's Checkout SDK / hosted-field integrations so PAN never hits our origin.
+- Walkable first-person navigation, or any user-driven camera rotation/pan. The frame is fixed; only objects move.
 - Multiple rooms / floors in v1.
 - Multiplayer, avatars, day/night cycles.
 - A custom CMS in v1 (editorial lives as MDX in the repo).
-- User accounts / login in v1.
+- User accounts / login in v1 (guest checkout only).
 
 ## Context — audit findings
 
@@ -46,7 +50,7 @@ A site audit was completed on 2026-05-08. Full results in `docs/audit/` and `dat
 
 ### The room
 
-A single orthographic interior — a musician's studio. Warm wood floor, exposed brick or paneled wall, a window throwing late-afternoon light, a record player or small amp humming in the corner. Black/white/red brand accents. Period-stylized wall signage ("DUNLOP. SINCE 1965.", "PERFORMANCE IS EVERYTHING.").
+A single 2D orthographic composition — a musician's studio rendered as a fixed-frame still life. The camera doesn't pan or rotate; the frame is the canvas. 3D objects live inside that frame and animate freely (rotate, hover, lift, sway, jiggle, fly between cells, swap places) in ways that would feel wrong inside a navigable space. Warm wood floor, exposed brick or paneled wall, a window throwing late-afternoon light, a record player or small amp humming in the corner. Black/white/red brand accents. Period-stylized wall signage ("DUNLOP. SINCE 1965.", "PERFORMANCE IS EVERYTHING.").
 
 Diegetic anchor objects, each tied to a category:
 
@@ -71,10 +75,10 @@ The room is small and curated. Deeper catalog access happens *inside* each objec
 
 ### Navigation
 
-- **Default view** — orthographic camera at an elevated angle. Drag rotates the room (limited arc, ~180°). Pinch / scroll zooms slightly. Idle drift returns to default.
-- **Hover / tap-hold** — interactable objects glow and show a label.
-- **Click → dive** — camera animates into the object, room blurs, content panel slides in from the right. Breadcrumb top-left, persistent cart icon top-right.
-- **Exit** — empty space, ESC, or back arrow returns to room.
+- **Default view** — fixed 2D orthographic frame. The camera does not pan, zoom, or rotate; composition is authored, not user-driven. Idle micro-animations (a pick wobbling, a cable swaying, dust motes drifting through window light, the record turning) keep the scene alive.
+- **Hover / tap-hold** — interactable objects animate in place (lift, glow, slow rotation revealing a hidden side) and show a label. The 2D framing means hover can be theatrical without disorienting the viewer.
+- **Click → dive** — the selected object animates to a hero position in-frame, surrounding objects gracefully recede or dim, and a content panel slides in from the right. Breadcrumb top-left, persistent cart icon top-right.
+- **Exit** — empty space, ESC, or back arrow returns the room to its resting composition.
 - **Loading** — themed loader on first paint (e.g., a spinning record, or a "TUNING UP." progress bar).
 - **Skip-to-shop escape hatch** — a top-right link drops to a conventional Next.js product list/grid view that exposes the same data, same cart, no 3D. Serves screen readers, low-end devices, SEO crawlers, and shoppers who just want to buy fast.
 
@@ -103,15 +107,25 @@ A dive is the core interaction. Three flavors, one anatomy.
 
 ### Cart & checkout
 
-**Basket as physical object.** In room view, the basket sits near the door. Items added literally appear in the basket as miniatures. Clicking the basket (or the persistent top-right cart icon) opens the cart panel.
+**Basket as physical object.** In room view, the basket sits in-frame. Items added literally fly across the composition into the basket as miniatures (the 2D framing makes this trajectory cinematic — much harder to choreograph in a free-camera room). Clicking the basket (or the persistent top-right cart icon) opens the cart panel.
 
 **Cart panel.** Line items: thumbnail, name, variant, qty stepper, line total, remove. Subtotal at the bottom. Primary "Checkout" button. Empty state encourages return-to-room.
 
-**Backend.** BigCommerce Cart API via GraphQL using the same Storefront token. Cart ID stored in `localStorage` + cookie; BigCommerce persists carts ~30 days server-side. The cart UI reads live from BC — they own the source of truth on prices and availability.
+**Cart backend.** BigCommerce Cart API via GraphQL using the same Storefront token. Cart ID stored in `localStorage` + cookie; BigCommerce persists carts ~30 days server-side. The cart UI reads live from BC — they own the source of truth on prices and availability.
 
-**Checkout handoff.** "Checkout" → redirect to `https://www.jimdunlop.com/checkout` with the cart cookie attached. BigCommerce's existing themed checkout takes over. No payment integration on our side in v1, no PCI scope. v2 may move to embedded checkout for visual continuity.
+**Custom checkout (no redirect).** Checkout is a first-party flow we build inside the diegetic experience, not a handoff. The flow steps:
 
-**Edge cases.** Out-of-stock blocks add and shows inline error. Quantity caps at available. Stale cart clears local state and surfaces a one-time toast. Network failures retry with subtle UI feedback.
+1. **Contact** — email (guest checkout in v1).
+2. **Shipping address** — address form, autocomplete optional.
+3. **Shipping method** — fetched live from BC, priced per address.
+4. **Payment** — tokenized via BC's Checkout SDK and the merchant's configured payment provider (Stripe / Braintree / Adyen — TBD per BC store config). Hosted fields render the card inputs so card data never touches our origin; we keep PCI scope to SAQ-A.
+5. **Review & place order** — order created via BC's checkout-to-order conversion endpoint. On success, an order confirmation panel slides in within the same frame; the basket empties with an animated rest pose.
+
+The visual treatment stays in the diegetic frame the entire way: checkout is a panel sequence on top of the same 2D-ortho scene, not a separate themed page. Errors from BC (declined card, address validation, inventory race) surface inline at the offending step with retry. v2: explore Apple Pay / Google Pay express paths and saved-customer login.
+
+**Backend split.** BC owns: products, prices, taxes, shipping rates, inventory, payment processing, order management, fulfillment, refunds, customer records. We own: cart UI, checkout UI, payment tokenization handoff, order confirmation UX. We do not store card data, do not settle payments, do not manage inventory.
+
+**Edge cases.** Out-of-stock blocks add and shows inline error. Quantity caps at available. Stale cart clears local state and surfaces a one-time toast. Network failures retry with subtle UI feedback. Payment errors surface inline at the payment step with retry; address-validation errors return user to the shipping step with the offending field flagged.
 
 ### Catalog depth
 
@@ -140,10 +154,11 @@ Hierarchy is at most four levels: **Room → Category dive → Sub-grouping → 
 
 - **Framework:** Next.js 16, App Router, on Vercel (Fluid Compute).
 - **Language:** TypeScript.
-- **Styling:** Tailwind for 2D UI overlays.
-- **3D:** react-three-fiber + drei + (dev-only) leva. glTF/glb models with Draco compression. Texture atlases.
+- **Styling:** Tailwind for 2D UI overlays (panels, buttons, type).
+- **3D:** react-three-fiber + drei + (dev-only) leva. glTF/glb models with Draco compression. Texture atlases. **Camera is fixed orthographic — no orbit controls, no user-driven camera motion.** Animation is per-object via spring/damp libraries (drei `useSpring`, `MathUtils.damp`) and react-spring/three for choreographed sequences.
 - **State:** Zustand. Single client store for cart, dive context, hover state, audio settings.
 - **Data layer:** Server-side wrapper around BigCommerce Storefront GraphQL (`https://www.jimdunlop.com/graphql`). Queries cached with Next.js `fetch` cache (`revalidate: 3600` for catalog, `0` for cart/availability).
+- **Checkout:** BigCommerce Checkout SDK (`@bigcommerce/checkout-sdk`) for step orchestration, address validation, shipping/tax quoting, and payment tokenization via hosted fields. Order placement via the SDK's `submitOrder`. PCI scope is SAQ-A — card fields render in BC's iframe/hosted-field surface, our DOM never sees PAN.
 - **JWT refresh:** lazy — when a server-side query 401s, we re-fetch the homepage HTML, extract the JWT (regex `eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`), persist to a server-side store, retry the query. No cron required.
 - **Editorial CMS:** MDX files in a `content/` folder. Upgrade to Sanity or Payload in v2 if the client needs self-edit.
 - **Audio:** Howler.js. Opt-in, default off, persistent toggle.
@@ -152,9 +167,9 @@ Hierarchy is at most four levels: **Room → Category dive → Sub-grouping → 
 
 ### 3D asset strategy
 
-**v1: primitive placeholders.** Boxes, cylinders, low-poly stand-ins. Untextured. Real interaction graph, scene composition, and dive logic — only the geometry is throwaway. This is intentional: M1 proves the concept end-to-end without burning budget on art.
+**v1: primitive placeholders.** Boxes, cylinders, low-poly stand-ins. Untextured. Real interaction graph, scene composition, dive logic, and animation choreography — only the geometry is throwaway. This is intentional: M1 proves the concept end-to-end without burning budget on art. Because the camera is fixed and the framing is 2D, primitive geometry composes more cleanly than it would in a free-camera room — silhouettes read against the frame.
 
-**Later:** stock models (Sketchfab/TurboSquid) for generic furniture/lighting + commissioned hero objects (vintage Cry Baby, branded pick jar, period signage, branded amp). The R3F scene graph stays the same; only the model files swap.
+**Later:** stock models (Sketchfab/TurboSquid) for generic furniture/lighting + commissioned hero objects (vintage Cry Baby, branded pick jar, period signage, branded amp). The R3F scene graph stays the same; only the model files swap. Animation rigs authored against primitives carry over.
 
 ### Repo shape (proposed)
 
