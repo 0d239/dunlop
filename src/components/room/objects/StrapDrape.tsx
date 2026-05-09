@@ -1,50 +1,42 @@
 'use client';
 
+import { Edges } from '@react-three/drei';
 import {
   useInteractable,
-  hoverEmissive,
-  hoverEmissiveIntensity,
+  edgeColor,
   type InteractableProps,
 } from '../useInteractable';
 
-/** A curved plane "draped" over the guitar's neck. We approximate with two
- * angled tube segments meeting at a peak. */
+/** A folded strap hanging on a hook — peak band with two falls. */
 export default function StrapDrape(props: InteractableProps) {
-  const { hovered, handlers, Label } = useInteractable(props, [0, 1.2, 0]);
-  const emissive = hoverEmissive(hovered);
-  const intensity = hoverEmissiveIntensity(hovered);
+  const { hovered, active, handlers, Label } = useInteractable(props, [0, 1.0, 0]);
+  const c = edgeColor(hovered, active);
 
   return (
-    <group position={[1.5, 2.95, 0]} {...handlers}>
-      {/* Drape down-front */}
-      <mesh position={[-0.3, -0.4, 0.1]} rotation={[0, 0, -0.6]}>
-        <boxGeometry args={[0.12, 1.4, 0.02]} />
-        <meshStandardMaterial
-          color="#2a4ea0"
-          roughness={0.85}
-          emissive={emissive}
-          emissiveIntensity={intensity}
-        />
+    <group {...handlers}>
+      {/* Hook at the top */}
+      <mesh position={[0, 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.2, 6]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
-      {/* Drape over neck (peak) */}
-      <mesh position={[0, 0.05, 0]} rotation={[0, 0, 0]}>
+      {/* Peak band */}
+      <mesh position={[0, 0.35, 0]}>
         <boxGeometry args={[0.6, 0.08, 0.08]} />
-        <meshStandardMaterial
-          color="#2a4ea0"
-          roughness={0.85}
-          emissive={emissive}
-          emissiveIntensity={intensity}
-        />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
-      {/* Drape down-back */}
-      <mesh position={[0.32, -0.4, -0.1]} rotation={[0, 0, 0.6]}>
+      {/* Front fall */}
+      <mesh position={[-0.22, -0.3, 0.05]} rotation={[0, 0, -0.4]}>
         <boxGeometry args={[0.12, 1.4, 0.02]} />
-        <meshStandardMaterial
-          color="#2a4ea0"
-          roughness={0.85}
-          emissive={emissive}
-          emissiveIntensity={intensity}
-        />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
+      </mesh>
+      {/* Back fall */}
+      <mesh position={[0.22, -0.3, -0.05]} rotation={[0, 0, 0.4]}>
+        <boxGeometry args={[0.12, 1.4, 0.02]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
       {Label}
     </group>

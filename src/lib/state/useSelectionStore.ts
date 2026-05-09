@@ -1,19 +1,15 @@
 import { create } from 'zustand';
 
 export type SelectionCategory =
-  | 'hero'
-  | 'electronics'
-  | 'heritage'
   | 'picks'
-  | 'custom-picks'
+  | 'electronics'
   | 'capos'
   | 'slides'
   | 'straps'
   | 'cables'
   | 'strings'
   | 'apparel'
-  | 'artists'
-  | 'cart';
+  | 'artists';
 
 export type Selection = {
   name: string;

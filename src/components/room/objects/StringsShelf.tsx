@@ -1,53 +1,42 @@
 'use client';
 
+import { Edges } from '@react-three/drei';
 import {
   useInteractable,
-  hoverEmissive,
-  hoverEmissiveIntensity,
+  edgeColor,
   type InteractableProps,
 } from '../useInteractable';
 
-/** Small wall shelf with three string-pack boxes. */
+/** Small wall shelf with three flat string-pack boxes stacked. */
 export default function StringsShelf(props: InteractableProps) {
-  const { hovered, handlers, Label } = useInteractable(props, [0, 0.7, 0]);
-  const emissive = hoverEmissive(hovered);
-  const intensity = hoverEmissiveIntensity(hovered);
+  const { hovered, active, handlers, Label } = useInteractable(props, [0, 0.7, 0]);
+  const c = edgeColor(hovered, active);
 
   return (
-    <group position={[-7.85, 2.6, -2.5]} rotation={[0, Math.PI / 2, 0]} {...handlers}>
+    <group {...handlers}>
       {/* Shelf plank */}
-      <mesh position={[0, 0, 0.2]} castShadow receiveShadow>
+      <mesh position={[0, 0, 0]}>
         <boxGeometry args={[1.6, 0.06, 0.4]} />
-        <meshStandardMaterial
-          color="#5a3a22"
-          roughness={0.7}
-          emissive={emissive}
-          emissiveIntensity={intensity * 0.4}
-        />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
       {/* Brackets */}
-      <mesh position={[-0.7, -0.15, 0.05]}>
+      <mesh position={[-0.7, -0.15, -0.15]}>
         <boxGeometry args={[0.04, 0.25, 0.04]} />
-        <meshStandardMaterial color="#1a1208" />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
-      <mesh position={[0.7, -0.15, 0.05]}>
+      <mesh position={[0.7, -0.15, -0.15]}>
         <boxGeometry args={[0.04, 0.25, 0.04]} />
-        <meshStandardMaterial color="#1a1208" />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
-      {/* Three thin packages stacked, slightly offset */}
-      {[
-        { y: 0.13, color: '#1a3a6a' },
-        { y: 0.21, color: '#a23018' },
-        { y: 0.29, color: '#1f6e3a' },
-      ].map((p, i) => (
-        <mesh key={i} position={[0, p.y, 0.2]} castShadow>
+      {/* Three thin packages stacked */}
+      {[0.07, 0.15, 0.23].map((y, i) => (
+        <mesh key={i} position={[0, y, 0]}>
           <boxGeometry args={[1.2, 0.06, 0.3]} />
-          <meshStandardMaterial
-            color={p.color}
-            roughness={0.6}
-            emissive={emissive}
-            emissiveIntensity={intensity}
-          />
+          <meshBasicMaterial color="#000" />
+          <Edges color={c} />
         </mesh>
       ))}
       {Label}

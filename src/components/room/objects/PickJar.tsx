@@ -1,51 +1,47 @@
 'use client';
 
+import { Edges } from '@react-three/drei';
 import {
   useInteractable,
-  hoverEmissive,
-  hoverEmissiveIntensity,
+  edgeColor,
   type InteractableProps,
 } from '../useInteractable';
 
-/** Short wide cylinder on the desk with a narrower lip. */
+/** Short wide cylinder with a narrower lip and a couple of picks suggested inside. */
 export default function PickJar(props: InteractableProps) {
-  const { hovered, handlers, Label } = useInteractable(props, [0, 0.9, 0]);
-  const emissive = hoverEmissive(hovered);
-  const intensity = hoverEmissiveIntensity(hovered);
+  const { hovered, active, handlers, Label } = useInteractable(props, [0, 1.0, 0]);
+  const c = edgeColor(hovered, active);
 
   return (
-    <group position={[-3.6, 1.66, -6.4]} {...handlers}>
+    <group {...handlers}>
       {/* Body */}
-      <mesh position={[0, 0.32, 0]} castShadow>
-        <cylinderGeometry args={[0.35, 0.32, 0.6, 24]} />
-        <meshStandardMaterial
-          color="#d4b878"
-          roughness={0.2}
-          metalness={0.05}
-          transparent
-          opacity={0.85}
-          emissive={emissive}
-          emissiveIntensity={intensity}
-        />
+      <mesh position={[0, 0.32, 0]}>
+        <cylinderGeometry args={[0.35, 0.32, 0.6, 12]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
       {/* Narrow lip */}
-      <mesh position={[0, 0.66, 0]} castShadow>
-        <cylinderGeometry args={[0.28, 0.28, 0.08, 24]} />
-        <meshStandardMaterial color="#b89858" roughness={0.3} />
+      <mesh position={[0, 0.66, 0]}>
+        <cylinderGeometry args={[0.28, 0.28, 0.08, 12]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
       {/* Cap */}
-      <mesh position={[0, 0.74, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.3, 0.06, 24]} />
-        <meshStandardMaterial color="#1a1208" />
+      <mesh position={[0, 0.74, 0]}>
+        <cylinderGeometry args={[0.3, 0.3, 0.06, 12]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
-      {/* Picks suggestion: two thin disks visible inside */}
+      {/* Two pick disks suggested inside */}
       <mesh position={[0.05, 0.45, 0]} rotation={[0.4, 0.2, 0]}>
-        <cylinderGeometry args={[0.16, 0.16, 0.01, 16]} />
-        <meshStandardMaterial color="#EF0000" />
+        <cylinderGeometry args={[0.16, 0.16, 0.01, 8]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
       <mesh position={[-0.08, 0.4, 0.05]} rotation={[-0.3, 0.5, 0]}>
-        <cylinderGeometry args={[0.16, 0.16, 0.01, 16]} />
-        <meshStandardMaterial color="#f5b820" />
+        <cylinderGeometry args={[0.16, 0.16, 0.01, 8]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
       {Label}
     </group>

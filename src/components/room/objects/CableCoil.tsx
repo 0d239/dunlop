@@ -1,39 +1,36 @@
 'use client';
 
+import { Edges } from '@react-three/drei';
 import {
   useInteractable,
-  hoverEmissive,
-  hoverEmissiveIntensity,
+  edgeColor,
   type InteractableProps,
 } from '../useInteractable';
 
-/** A torus on a wall hook. */
+/** A coiled cable on a hook with a plug end. */
 export default function CableCoil(props: InteractableProps) {
-  const { hovered, handlers, Label } = useInteractable(props, [0, 0.7, 0]);
-  const emissive = hoverEmissive(hovered);
-  const intensity = hoverEmissiveIntensity(hovered);
+  const { hovered, active, handlers, Label } = useInteractable(props, [0, 0.8, 0]);
+  const c = edgeColor(hovered, active);
 
   return (
-    <group position={[-7.85, 4.4, -2.5]} rotation={[0, Math.PI / 2, 0]} {...handlers}>
+    <group {...handlers}>
       {/* Wall hook */}
-      <mesh position={[0, 0.05, 0.18]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.04, 0.04, 0.3, 12]} />
-        <meshStandardMaterial color="#1a1208" />
+      <mesh position={[0, 0.45, 0.15]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.3, 6]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
       {/* Coiled cable */}
-      <mesh position={[0, -0.3, 0.18]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-        <torusGeometry args={[0.45, 0.07, 12, 28]} />
-        <meshStandardMaterial
-          color="#101010"
-          roughness={0.9}
-          emissive={emissive}
-          emissiveIntensity={intensity}
-        />
+      <mesh position={[0, 0, 0.15]}>
+        <torusGeometry args={[0.45, 0.07, 6, 16]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
       {/* Plug end */}
-      <mesh position={[0.45, -0.3, 0.18]} rotation={[0, 0, 0]}>
-        <cylinderGeometry args={[0.05, 0.05, 0.16, 8]} />
-        <meshStandardMaterial color="#c2a060" metalness={0.7} roughness={0.3} />
+      <mesh position={[0.45, 0, 0.15]}>
+        <cylinderGeometry args={[0.05, 0.05, 0.16, 6]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
       {Label}
     </group>

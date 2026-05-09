@@ -1,47 +1,37 @@
 'use client';
 
+import { Edges } from '@react-three/drei';
 import {
   useInteractable,
-  hoverEmissive,
-  hoverEmissiveIntensity,
+  edgeColor,
   type InteractableProps,
 } from '../useInteractable';
 
-/** A peg on the wall with 3 capo-shaped objects (torus segment + small box). */
+/** A peg on the wall with three capos hanging off it. */
 export default function CapoHook(props: InteractableProps) {
-  const { hovered, handlers, Label } = useInteractable(props, [0, 0.8, 0]);
-  const emissive = hoverEmissive(hovered);
-  const intensity = hoverEmissiveIntensity(hovered);
+  const { hovered, active, handlers, Label } = useInteractable(props, [0, 0.6, 0]);
+  const c = edgeColor(hovered, active);
 
   return (
-    <group position={[-7.85, 3.4, 1.5]} rotation={[0, Math.PI / 2, 0]} {...handlers}>
-      {/* Wall peg */}
-      <mesh position={[0, 0, 0.18]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.04, 0.04, 0.3, 12]} />
-        <meshStandardMaterial color="#1a1208" />
+    <group {...handlers}>
+      {/* Peg sticking forward toward the camera */}
+      <mesh position={[0, 0, 0.15]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.3, 6]} />
+        <meshBasicMaterial color="#000" />
+        <Edges color={c} />
       </mesh>
-      {/* Three capos hanging — each is a small torus + box */}
-      {[
-        { x: -0.4, color: '#202020' },
-        { x: 0.0, color: '#a5a5a5' },
-        { x: 0.4, color: '#EF0000' },
-      ].map((c, i) => (
-        <group key={i} position={[c.x, -0.35, 0.18]}>
-          {/* C-clamp shape (torus segment) */}
+      {/* Three capos hanging — torus segment + lever box */}
+      {[-0.4, 0.0, 0.4].map((x, i) => (
+        <group key={i} position={[x, -0.35, 0.15]}>
           <mesh rotation={[0, Math.PI / 2, 0]}>
-            <torusGeometry args={[0.14, 0.04, 8, 16, Math.PI * 1.4]} />
-            <meshStandardMaterial
-              color={c.color}
-              metalness={0.5}
-              roughness={0.4}
-              emissive={emissive}
-              emissiveIntensity={intensity}
-            />
+            <torusGeometry args={[0.14, 0.04, 6, 12, Math.PI * 1.4]} />
+            <meshBasicMaterial color="#000" />
+            <Edges color={c} />
           </mesh>
-          {/* Small lever box */}
-          <mesh position={[0, -0.18, 0.14]}>
+          <mesh position={[0, -0.18, 0.0]}>
             <boxGeometry args={[0.06, 0.18, 0.08]} />
-            <meshStandardMaterial color={c.color} metalness={0.4} roughness={0.4} />
+            <meshBasicMaterial color="#000" />
+            <Edges color={c} />
           </mesh>
         </group>
       ))}

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { Html } from '@react-three/drei';
+import type { ThreeEvent } from '@react-three/fiber';
 import {
   useSelectionStore,
   type SelectionCategory,
@@ -13,14 +14,15 @@ export type InteractableProps = {
   onSelect?: (name: string) => void;
 };
 
+export const EDGE_DEFAULT = '#ffffff';
+export const EDGE_ACTIVE = '#EF0000';
+
 /**
  * Shared hover/click hook for every interactable object.
  *
- * Returns event handlers to spread onto a <group>, plus a `hovered` flag
- * the consumer can use to drive emissive/outline state on its meshes.
- *
- * Also returns a <Label /> element the consumer should render so the
- * floating tooltip appears above the object on hover.
+ * Returns event handlers, a `hovered` flag, an `active` flag (true when this
+ * object is the current selection), and a <Label /> element to render on
+ * hover.
  */
 export function useInteractable(
   { name, category, onSelect }: InteractableProps,
@@ -29,9 +31,10 @@ export function useInteractable(
   const [hovered, setHovered] = useState(false);
   const select = useSelectionStore((s) => s.select);
   const setStoreHover = useSelectionStore((s) => s.setHovered);
+  const active = useSelectionStore((s) => s.selected?.name === name);
 
   const onPointerOver = useCallback(
-    (e: { stopPropagation: () => void }) => {
+    (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
       setHovered(true);
       setStoreHover(name);
@@ -41,17 +44,17 @@ export function useInteractable(
   );
 
   const onPointerOut = useCallback(
-    (e: { stopPropagation: () => void }) => {
+    (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
       setHovered(false);
       setStoreHover(null);
-      document.body.style.cursor = 'auto';
+      document.body.style.cursor = '';
     },
     [setStoreHover],
   );
 
   const onClick = useCallback(
-    (e: { stopPropagation: () => void }) => {
+    (e: ThreeEvent<MouseEvent>) => {
       e.stopPropagation();
       select({ name, category });
       onSelect?.(name);
@@ -68,20 +71,21 @@ export function useInteractable(
     <Html
       position={labelOffset}
       center
-      distanceFactor={8}
-      style={{ pointerEvents: 'none' }}
+      zIndexRange={[100, 0]}
+      style={{ pointerEvents: 'none', userSelect: 'none' }}
     >
       <div
         style={{
           background: 'rgba(0,0,0,0.78)',
           color: '#f5f1ea',
-          padding: '4px 10px',
-          borderRadius: 4,
-          fontSize: 11,
-          letterSpacing: 1.2,
+          padding: '3px 8px',
+          borderRadius: 3,
+          fontSize: 10,
+          letterSpacing: 1.4,
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
-          border: '1px solid rgba(239,0,0,0.5)',
+          border: `1px solid ${EDGE_ACTIVE}`,
+          transform: 'translateY(-4px)',
         }}
       >
         {name}
@@ -89,14 +93,10 @@ export function useInteractable(
     </Html>
   ) : null;
 
-  return { hovered, handlers, Label };
+  return { hovered, active, handlers, Label };
 }
 
-/** Helper: pick an emissive color based on hover state. */
-export function hoverEmissive(hovered: boolean, base = '#000000') {
-  return hovered ? '#EF0000' : base;
-}
-
-export function hoverEmissiveIntensity(hovered: boolean) {
-  return hovered ? 0.55 : 0;
+/** Pick the edge color for an object based on hover/selection state. */
+export function edgeColor(hovered: boolean, active: boolean) {
+  return hovered || active ? EDGE_ACTIVE : EDGE_DEFAULT;
 }
