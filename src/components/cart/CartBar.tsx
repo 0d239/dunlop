@@ -1,0 +1,51 @@
+'use client';
+
+import { useCartStore, selectItemCount } from '@/lib/state/useCartStore';
+
+export default function CartBar() {
+  const itemCount = useCartStore(selectItemCount);
+
+  return (
+    <div className="pointer-events-auto flex h-16 w-full shrink-0 items-center justify-between border-t border-white/15 bg-black px-6 text-xs uppercase tracking-[0.3em]">
+      <div className="flex items-center gap-3 text-neutral-300">
+        <BasketIcon />
+        <span>Basket</span>
+        {itemCount > 0 && (
+          <span className="rounded-full bg-[#EF0000] px-2 py-[2px] text-[10px] tracking-normal text-white">
+            {itemCount}
+          </span>
+        )}
+        <span className="text-neutral-600">·</span>
+        <span className="text-neutral-500">
+          {itemCount} {itemCount === 1 ? 'item' : 'items'}
+        </span>
+      </div>
+      <button
+        type="button"
+        disabled={itemCount === 0}
+        className="rounded-full border border-white/20 px-5 py-2 text-neutral-300 transition hover:border-[#EF0000] hover:text-[#EF0000] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/20 disabled:hover:text-neutral-300"
+      >
+        Checkout
+      </button>
+    </div>
+  );
+}
+
+function BasketIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 8 H20 L18.4 20.2 a1.2 1.2 0 0 1 -1.2 1 H6.8 a1.2 1.2 0 0 1 -1.2 -1 Z" />
+      <path d="M4 8 L8 4 H16 L20 8" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+}
