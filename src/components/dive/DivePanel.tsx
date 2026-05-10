@@ -1,9 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useSelectionStore } from '@/lib/state/useSelectionStore';
 import { PRODUCTS_BY_CATEGORY } from '@/data/products';
 import { CATEGORY_ORDER, CATEGORY_LABELS } from '@/lib/categories';
+import {
+  applyFilters,
+  filtersReducer,
+  initialFilters,
+  isFiltered,
+  type SortMode,
+} from './filters';
 
 export default function DivePanel() {
   const dive = useSelectionStore((s) => s.selected);
@@ -14,8 +21,22 @@ export default function DivePanel() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
+  const [filters, dispatch] = useReducer(filtersReducer, initialFilters);
+
   const open = dive !== null;
   const products = dive ? PRODUCTS_BY_CATEGORY[dive.category] : [];
+
+  const filtered = useMemo(() => applyFilters(products, filters), [products, filters]);
+
+  const brands = useMemo(
+    () =>
+      Array.from(
+        new Set(products.map((p) => p.brand).filter((b): b is string => !!b)),
+      ).sort(),
+    [products],
+  );
+
+  const filtersActive = isFiltered(filters);
 
   useEffect(() => {
     if (!open) return;
@@ -54,6 +75,10 @@ export default function DivePanel() {
 
   useEffect(() => {
     setDropdownOpen(false);
+  }, [dive?.category]);
+
+  useEffect(() => {
+    dispatch({ type: 'reset' });
   }, [dive?.category]);
 
   return (
@@ -134,7 +159,9 @@ export default function DivePanel() {
             ) : null}
           </div>
           <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-neutral-600">
-            {products.length} {products.length === 1 ? 'item' : 'items'}
+            {filtersActive
+              ? `${filtered.length} of ${products.length} items`
+              : `${products.length} ${products.length === 1 ? 'item' : 'items'}`}
           </div>
         </div>
         <button
@@ -146,6 +173,58 @@ export default function DivePanel() {
           ESC
         </button>
       </header>
+
+      {products.length > 0 ? (
+        <div className="border-b border-white/10 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={filters.query}
+              onChange={(e) =>
+                dispatch({ type: 'set-query', query: e.target.value })
+              }
+              placeholder="Search"
+              className="flex-1 rounded border border-white/10 bg-black/60 px-3 py-1.5 text-[12px] text-white placeholder:text-neutral-600 focus:border-white/30 focus:outline-none"
+            />
+            <select
+              value={filters.sort}
+              onChange={(e) =>
+                dispatch({
+                  type: 'set-sort',
+                  sort: e.target.value as SortMode,
+                })
+              }
+              className="rounded border border-white/10 bg-black/60 px-2 py-1.5 text-[11px] uppercase tracking-[0.15em] text-neutral-300 focus:border-white/30 focus:outline-none"
+            >
+              <option value="default">Sort</option>
+              <option value="price-asc">Price ↑</option>
+              <option value="price-desc">Price ↓</option>
+              <option value="name-asc">Name A–Z</option>
+            </select>
+          </div>
+          {brands.length > 1 ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {brands.map((b) => {
+                const active = filters.selectedBrands.has(b);
+                return (
+                  <button
+                    key={b}
+                    type="button"
+                    onClick={() => dispatch({ type: 'toggle-brand', brand: b })}
+                    className={`rounded-full border px-3 py-0.5 text-[10px] uppercase tracking-[0.15em] transition ${
+                      active
+                        ? 'border-[#EF0000] text-[#EF0000]'
+                        : 'border-white/15 text-neutral-400 hover:border-white/30 hover:text-white'
+                    }`}
+                  >
+                    {b}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="flex-1 overflow-y-auto">
         {products.length === 0 ? (
@@ -159,9 +238,24 @@ export default function DivePanel() {
               </div>
             </div>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex h-full items-center justify-center p-12 text-center">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.3em] text-neutral-600">
+                No matches
+              </div>
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'reset' })}
+                className="mt-3 text-sm text-neutral-400 transition hover:text-[#EF0000]"
+              >
+                Clear filters
+              </button>
+            </div>
+          </div>
         ) : (
           <ul className="divide-y divide-white/5">
-            {products.map((p) => (
+            {filtered.map((p) => (
               <li key={p.id}>
                 <button
                   type="button"
