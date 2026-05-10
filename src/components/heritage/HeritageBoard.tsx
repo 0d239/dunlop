@@ -21,6 +21,7 @@ function useHeritagePalette() {
       body: '#dcd6c8',
       hint: '#5a5a5a',
       backing: '#000000',
+      backingOpacity: 0.92,
     };
   }
   return {
@@ -29,6 +30,7 @@ function useHeritagePalette() {
     body: '#3a3a3a',
     hint: '#9a9a9a',
     backing: '#ffffff',
+    backingOpacity: 0,
   };
 }
 
@@ -95,10 +97,14 @@ export default function HeritageBoard() {
 
   return (
     <group ref={groupRef} position={[0, REST_Y, 0]} scale={0.6}>
-      {/* Backing plane with theme-aware wireframe edges */}
+      {/* Backing plane — filled in dark, transparent (wireframe-only) in light */}
       <mesh onClick={handleClick}>
         <planeGeometry args={[WIDTH, HEIGHT]} />
-        <meshBasicMaterial color={palette.backing} transparent opacity={0.92} />
+        <meshBasicMaterial
+          color={palette.backing}
+          transparent
+          opacity={palette.backingOpacity}
+        />
         <Edges color={palette.edge} />
       </mesh>
 

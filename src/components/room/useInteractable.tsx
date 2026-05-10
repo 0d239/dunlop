@@ -41,8 +41,12 @@ export function useInteractable(
   const edgeBase = theme === 'dark' ? EDGE_DARK : EDGE_LIGHT;
   const edge = hovered || active ? EDGE_ACTIVE : edgeBase;
   const fill = theme === 'dark' ? FILL_DARK : FILL_LIGHT;
+  // Light mode renders wireframe-only: body meshes go fully transparent so
+  // only the Edges show. Avoids the cream-halo created by AA between white
+  // fill and black edges on a white scene.
+  const bodyOpacity = theme === 'dark' ? 1 : 0;
   const labelBg =
-    theme === 'dark' ? 'rgba(0,0,0,0.78)' : 'rgba(255,255,255,0.85)';
+    theme === 'dark' ? 'rgba(0,0,0,0.78)' : 'rgba(255,255,255,0.92)';
   const labelFg = theme === 'dark' ? '#f5f1ea' : '#0a0a0a';
 
   const onPointerOver = useCallback(
@@ -105,5 +109,5 @@ export function useInteractable(
     </Html>
   ) : null;
 
-  return { hovered, active, handlers, Label, edge, fill };
+  return { hovered, active, handlers, Label, edge, fill, bodyOpacity };
 }

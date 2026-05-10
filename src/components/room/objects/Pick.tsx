@@ -13,7 +13,7 @@ import {
  * Extruded a shallow depth so the camera reads it as a flat token from the front.
  */
 export default function Pick(props: InteractableProps) {
-  const { handlers, Label, edge: c, fill } = useInteractable(props, [0, 1.6, 0]);
+  const { handlers, Label, edge: c, fill, bodyOpacity } = useInteractable(props, [0, 1.6, 0]);
 
   const shape = useMemo(() => {
     const s = new THREE.Shape();
@@ -33,7 +33,7 @@ export default function Pick(props: InteractableProps) {
     <group {...handlers}>
       <mesh position={[0, 1.0, 0]}>
         <extrudeGeometry args={[shape, extrudeSettings]} />
-        <meshBasicMaterial color={fill} />
+        <meshBasicMaterial color={fill} transparent opacity={bodyOpacity} />
         <Edges color={c} threshold={1} />
       </mesh>
       {Label}

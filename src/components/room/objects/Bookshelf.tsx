@@ -8,7 +8,7 @@ import {
 
 /** Tall box with three horizontal shelves, each holding a row of records. */
 export default function Bookshelf(props: InteractableProps) {
-  const { handlers, Label, edge: c, fill } = useInteractable(props, [0, 4.2, 0]);
+  const { handlers, Label, edge: c, fill, bodyOpacity } = useInteractable(props, [0, 4.2, 0]);
 
   const shelfYs = [0.9, 2.05, 3.2];
 
@@ -17,30 +17,30 @@ export default function Bookshelf(props: InteractableProps) {
       {/* Sides */}
       <mesh position={[-1.0, 1.95, 0]}>
         <boxGeometry args={[0.08, 3.9, 0.7]} />
-        <meshBasicMaterial color={fill} />
+        <meshBasicMaterial color={fill} transparent opacity={bodyOpacity} />
         <Edges color={c} />
       </mesh>
       <mesh position={[1.0, 1.95, 0]}>
         <boxGeometry args={[0.08, 3.9, 0.7]} />
-        <meshBasicMaterial color={fill} />
+        <meshBasicMaterial color={fill} transparent opacity={bodyOpacity} />
         <Edges color={c} />
       </mesh>
       {/* Top + bottom */}
       <mesh position={[0, 3.9, 0]}>
         <boxGeometry args={[2.08, 0.08, 0.7]} />
-        <meshBasicMaterial color={fill} />
+        <meshBasicMaterial color={fill} transparent opacity={bodyOpacity} />
         <Edges color={c} />
       </mesh>
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[2.08, 0.08, 0.7]} />
-        <meshBasicMaterial color={fill} />
+        <meshBasicMaterial color={fill} transparent opacity={bodyOpacity} />
         <Edges color={c} />
       </mesh>
       {/* Shelves */}
       {shelfYs.map((y, i) => (
         <mesh key={`shelf-${i}`} position={[0, y, 0]}>
           <boxGeometry args={[1.92, 0.05, 0.6]} />
-          <meshBasicMaterial color={fill} />
+          <meshBasicMaterial color={fill} transparent opacity={bodyOpacity} />
           <Edges color={c} />
         </mesh>
       ))}
@@ -55,7 +55,7 @@ export default function Bookshelf(props: InteractableProps) {
               rotation={[0, 0, (j % 2) * 0.04]}
             >
               <boxGeometry args={[0.18, 0.95, 0.04]} />
-              <meshBasicMaterial color={fill} />
+              <meshBasicMaterial color={fill} transparent opacity={bodyOpacity} />
               <Edges color={c} />
             </mesh>
           );
