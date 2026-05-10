@@ -7,8 +7,14 @@ import * as THREE from 'three';
 import { useSelectionStore } from '@/lib/state/useSelectionStore';
 import { useThemeStore } from '@/lib/state/useThemeStore';
 
-const REST_Y = 20;
-const ACTIVE_Y = 8.5;
+/** Camera looks at world y = 6.5 in editorial mode; sit the panel there so
+ *  it lands in the vertical center of the viewport while the logo at y = 13
+ *  stays in its top-of-screen spot. */
+const ANCHOR_Y = 6.5;
+/** Parked behind the grid plane (z ≈ 0) in the depth buffer. When the grid
+ *  icons are visible they occlude the board where they overlap; when they
+ *  scale to 0 in editorial mode the board is revealed. */
+const ANCHOR_Z = -5;
 const WIDTH = 11;
 const HEIGHT = 5.5;
 
@@ -73,9 +79,9 @@ export default function HeritageBoard() {
     }
     prevEditorial.current = editorial;
 
-    const targetY = editorial ? ACTIVE_Y : REST_Y;
-    const targetScale = editorial ? 1 : 0.6;
-    g.position.y = THREE.MathUtils.damp(g.position.y, targetY, 6, delta);
+    // Position is fixed (sitting behind the grid plane). Visibility is driven
+    // by scale lerp 0 ↔ 1, while the grid icons handle real depth occlusion.
+    const targetScale = editorial ? 1 : 0;
     const s = THREE.MathUtils.damp(g.scale.x, targetScale, 6, delta);
     g.scale.setScalar(s);
 
@@ -87,7 +93,7 @@ export default function HeritageBoard() {
       g.rotation.x = THREE.MathUtils.damp(g.rotation.x, 0, 6, delta);
     }
 
-    g.visible = g.position.y < REST_Y - 0.3;
+    g.visible = s > 0.02;
   });
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
@@ -96,7 +102,7 @@ export default function HeritageBoard() {
   };
 
   return (
-    <group ref={groupRef} position={[0, REST_Y, 0]} scale={0.6}>
+    <group ref={groupRef} position={[0, ANCHOR_Y, ANCHOR_Z]} scale={0}>
       {/* Backing plane — filled in dark, transparent (wireframe-only) in light */}
       <mesh onClick={handleClick}>
         <planeGeometry args={[WIDTH, HEIGHT]} />

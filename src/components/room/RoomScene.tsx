@@ -15,10 +15,9 @@ import { useThemeStore } from '@/lib/state/useThemeStore';
 const GRID_WIDTH = 13;
 const GRID_HEIGHT = 16;
 const GRID_CENTER_Y = 6.5;
-const EDITORIAL_CENTER_Y = 10.5;
-const EDITORIAL_ZOOM_FACTOR = 1.25;
 const DIVE_ZOOM_FACTOR = 1.18;
 const DIVE_CENTER_Y = 4.5;
+const REST_Z = 12;
 
 export default function RoomScene() {
   const select = useSelectionStore((s) => s.select);
@@ -43,8 +42,8 @@ export default function RoomScene() {
         worldWidth={GRID_WIDTH}
         worldHeight={GRID_HEIGHT}
         restCenterY={GRID_CENTER_Y}
-        editorialCenterY={EDITORIAL_CENTER_Y}
         diveCenterY={DIVE_CENTER_Y}
+        restZ={REST_Z}
       />
       <ThemedSceneBackground />
 
@@ -68,20 +67,19 @@ function CameraDriver({
   worldWidth,
   worldHeight,
   restCenterY,
-  editorialCenterY,
   diveCenterY,
+  restZ,
   padding = 1.1,
 }: {
   worldWidth: number;
   worldHeight: number;
   restCenterY: number;
-  editorialCenterY: number;
   diveCenterY: number;
+  restZ: number;
   padding?: number;
 }) {
   const { size, camera } = useThree();
   const fitZoomRef = useRef(50);
-  const editorial = useSelectionStore((s) => s.editorial);
   const dive = useSelectionStore((s) => s.selected);
 
   useLayoutEffect(() => {
@@ -92,21 +90,25 @@ function CameraDriver({
 
   useFrame((_, delta) => {
     const ortho = camera as THREE.OrthographicCamera;
-    const targetZoom = editorial
-      ? fitZoomRef.current * EDITORIAL_ZOOM_FACTOR
-      : dive
-        ? fitZoomRef.current * DIVE_ZOOM_FACTOR
-        : fitZoomRef.current;
-    const targetY = editorial
-      ? editorialCenterY
-      : dive
-        ? diveCenterY
-        : restCenterY;
+    // Editorial leaves the camera completely alone — no zoom, no Z dolly, no
+    // Y dolly — so the logo can't drift on screen. The "behind the grid"
+    // feel comes entirely from grid icons scaling to 0 + heritage panel
+    // scaling to 1 in their fixed positions.
+    const targetZoom = dive
+      ? fitZoomRef.current * DIVE_ZOOM_FACTOR
+      : fitZoomRef.current;
+    const targetY = dive ? diveCenterY : restCenterY;
 
     ortho.zoom = THREE.MathUtils.damp(ortho.zoom, targetZoom, 6, delta);
     ortho.position.y = THREE.MathUtils.damp(
       ortho.position.y,
       targetY,
+      6,
+      delta,
+    );
+    ortho.position.z = THREE.MathUtils.damp(
+      ortho.position.z,
+      restZ,
       6,
       delta,
     );

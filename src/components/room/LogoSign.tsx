@@ -9,7 +9,10 @@ import { useThemeStore } from '@/lib/state/useThemeStore';
 
 const REST_POS: [number, number, number] = [0, 13, 0];
 const REST_SCALE = 1.0;
-const EDITORIAL_SCALE = 1.25;
+/** When a category dive is open the camera zoom factor is 1.18, so a 0.85
+ *  scale (≈ 1/1.18) keeps the logo's pixel size approximately the same as at
+ *  rest. Editorial leaves the camera untouched, so no editorial-specific
+ *  override is needed — the logo doesn't need to compensate for anything. */
 const DIVE_SCALE = 0.85;
 
 /** Logo PNG aspect — 284 × 68 px from the BigCommerce theme bundle. */
@@ -38,12 +41,8 @@ export default function LogoSign() {
   useFrame((_, delta) => {
     const g = groupRef.current;
     if (!g) return;
-    const targetScale = editorial
-      ? EDITORIAL_SCALE
-      : dive
-        ? DIVE_SCALE
-        : REST_SCALE;
-    const s = THREE.MathUtils.damp(g.scale.x, targetScale, 8, delta);
+    const targetScale = dive ? DIVE_SCALE : REST_SCALE;
+    const s = THREE.MathUtils.damp(g.scale.x, targetScale, 6, delta);
     g.scale.setScalar(s);
   });
 
