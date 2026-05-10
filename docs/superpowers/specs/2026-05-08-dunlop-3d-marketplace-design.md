@@ -8,6 +8,7 @@
 **Revisions**
 - 2026-05-08 — Camera/composition revised from a rotatable 3D room to a fixed **2D orthographic framing of 3D objects**. The frame is the canvas; objects animate inside it. Trade-off: lose user-driven rotation; gain creative latitude on animation, choreography, and composition.
 - 2026-05-08 — Checkout revised from redirect-to-hosted-BigCommerce to a **custom first-party checkout on the same BigCommerce backend**. Adds scope (now its own milestone) but preserves the diegetic frame through the entire purchase flow.
+- 2026-05-09 — Reaffirmed: the BC integration is a **plug-and-play adapter**, not a re-implementation. Storefront GraphQL for catalog, BC Cart API for cart, `@bigcommerce/checkout-sdk` for checkout. We render UI against BC's official surfaces and never own commerce logic. See "Adapter-thin philosophy" under Cart & checkout.
 
 ## Overview
 
@@ -125,6 +126,8 @@ The visual treatment stays in the diegetic frame the entire way: checkout is a p
 
 **Backend split.** BC owns: products, prices, taxes, shipping rates, inventory, payment processing, order management, fulfillment, refunds, customer records. We own: cart UI, checkout UI, payment tokenization handoff, order confirmation UX. We do not store card data, do not settle payments, do not manage inventory.
 
+**Adapter-thin philosophy.** The new front-end is an opinionated *renderer*, not a re-implementation of commerce logic. Wherever BigCommerce ships an official client (Storefront GraphQL for catalog, the Cart REST/GraphQL surface for carts, `@bigcommerce/checkout-sdk` for checkout), we use it directly and render UI against the events/state it exposes. We do not write our own order state machine, our own payment retry semantics, our own tax math, or our own address validation — BC owns all of that, and the SDK is the contract. If BC adds a payment method, ships a fix, or rotates a payment provider integration, we should pick it up by upgrading the SDK, not by patching our code. The internal BC adapter (`src/lib/bigcommerce/`) is a thin facade: typed query helpers + a checkout-SDK lifecycle wrapper, no business logic of our own. When we feel the urge to "improve" on BC's behavior, the default answer is *don't*.
+
 **Edge cases.** Out-of-stock blocks add and shows inline error. Quantity caps at available. Stale cart clears local state and surfaces a one-time toast. Network failures retry with subtle UI feedback. Payment errors surface inline at the payment step with retry; address-validation errors return user to the shipping step with the offending field flagged.
 
 ### Catalog depth
@@ -202,37 +205,55 @@ Hierarchy is at most four levels: **Room → Category dive → Sub-grouping → 
 
 ### Milestone 1 — diegetic prototype (the demo)
 
-The minimum that proves the concept on real data and earns credentials + budget.
+The minimum that proves the concept on real data and earns credentials + budget. Browsing + add-to-cart only; checkout is stubbed.
 
 - One basic room with ~6 placeholder primitive objects: pedalboard, pick jar, capo peg, strap rack, bookshelf, basket.
-- Orthographic camera, drag-to-rotate, click-to-dive, ESC/back.
-- 2-3 categories live on BigCommerce GraphQL: picks, pedals, capos. Other room objects show a "Coming soon" panel.
+- Fixed 2D orthographic camera (no rotation), click-to-dive, ESC/back, dive choreography (selected object hero-poses, others recede).
+- 2–3 categories live on BigCommerce GraphQL: picks, pedals, capos. Other room objects show a "Coming soon" panel.
 - Real product detail dives (title, price, image, description, Add to cart).
-- Live cart: items add to BC via cart mutation, badge animates, basket count updates, cart panel lists items, **Checkout redirects to jimdunlop.com/checkout** with cart cookie.
+- Live cart wired to BC Cart API: items add via cart mutation with animated fly-to-basket, badge animates, basket count updates, cart panel lists items.
+- **Checkout button is a stub** in M1 — opens a "Checkout coming soon" panel. Real checkout lands in M2.
 - One editorial dive — founder photo with placeholder copy — proves the pattern.
 - "Skip to shop" link top-right drops to a Next.js list view (same data, no 3D).
 - Deployed to Vercel preview URL.
 
-**Out of M1:** other categories, search, filters, real 3D models, audio, animation polish, artist roster, real heritage stories, custom picks workbench, variants UI, mobile-specific gestures.
+**Out of M1:** custom checkout, other categories, search, filters, real 3D models, audio, animation polish, artist roster, real heritage stories, custom picks workbench, variants UI, mobile-specific gestures.
 
-### Milestone 2 — content pass
+### Milestone 2 — custom checkout
+
+Build the first-party checkout that replaces the BC hosted redirect. Same backend, our UI, in-frame.
+
+- Integrate `@bigcommerce/checkout-sdk` against the live BC store. Confirm with client which payment provider is provisioned (Stripe / Braintree / Adyen) before starting; SDK init differs per provider.
+- Checkout flow as a panel sequence layered over the room: Contact → Shipping address → Shipping method → Payment → Review.
+- Shipping rates and tax fetched live from BC per address.
+- Payment via hosted fields — card data tokenized in BC's iframe, never touching our DOM. PCI scope: SAQ-A.
+- Order submission via SDK; success state animates the basket emptying with a "thank-you" confirmation panel and order number from BC.
+- Inline error handling at each step (declined card, address validation, inventory race, network).
+- Guest checkout only (no account creation in v1).
+- Deployed and end-to-end test-purchased on the BC sandbox/staging store before pointing at production.
+
+**Out of M2:** Apple Pay / Google Pay, saved customers, account login, address book, post-purchase upsell.
+
+### Milestone 3 — content pass
 
 Crawl `/artists/<slug>/` pages. Populate bookshelf with 40 artist profiles. Write Cry Baby and founder heritage copy with client. Add pack-size variants UI for picks. Mobile gesture polish.
 
-### Milestone 3 — visual pass
+### Milestone 4 — visual pass
 
-Replace primitives with real 3D models (stock + 4-5 commissioned hero objects). Lighting, materials, post-processing. Audio cues.
+Replace primitives with real 3D models (stock + 4–5 commissioned hero objects). Lighting, materials, post-processing. Audio cues. Authored animation polish (fly-to-basket arc, dive transitions, idle ambient motion).
 
-### Milestone 4 — full catalog
+### Milestone 5 — full catalog
 
 Remaining categories wired (strings, slides, straps, cables, apparel). In-fiction filter UIs. Search. Curation/featured tooling.
 
 ## Open questions
 
 - Final domain for the prototype (Vercel preview is fine for demo; client will eventually want a real domain).
-- Whether the client wants to swap to embedded BigCommerce checkout (v2) or stay with redirect handoff.
+- **Which payment provider is configured on the live BC store** (Stripe / Braintree / Adyen / other). Determines Checkout SDK init and the hosted-fields surface; needed before M2 starts.
+- Whether to point the M2 checkout at the BC sandbox or directly at the production store with test-mode payment keys.
 - Source of the heritage copy: client-written, ghostwritten by us with client approval, or pulled from third-party sources with citations.
-- Whether to crawl artist pages now (small followup task) or defer to M2.
+- Whether to crawl artist pages now (small followup task) or defer to the content pass milestone.
+- How aggressive idle animation should be (subtle ambient vs. always-something-moving). Affects perceived energy and battery on mobile.
 
 ## References
 

@@ -19,13 +19,19 @@ export type Selection = {
 type SelectionStore = {
   selected: Selection | null;
   hovered: string | null;
+  editorial: boolean;
   select: (selection: Selection | null) => void;
   setHovered: (name: string | null) => void;
+  openEditorial: () => void;
+  closeEditorial: () => void;
 };
 
 export const useSelectionStore = create<SelectionStore>((set) => ({
   selected: null,
   hovered: null,
+  editorial: false,
   select: (selection) => set({ selected: selection }),
   setHovered: (name) => set({ hovered: name }),
+  openEditorial: () => set({ editorial: true, selected: null }),
+  closeEditorial: () => set({ editorial: false }),
 }));

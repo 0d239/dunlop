@@ -43,7 +43,9 @@ const CELL = 4.5;
 const GRID_SCALE = 0.55;
 const DIVE_SCALE = 1.0;
 const DIVE_TARGET: [number, number, number] = [-6, 4.5, 1];
-const LAMBDA = 8;
+const LAMBDA = 6;
+/** How far non-selected icons fly past the camera, in world units. */
+const ESCAPE_DISTANCE = 32;
 
 export default function Interactables() {
   const onSelect = useCallback((name: string) => {
@@ -84,16 +86,41 @@ function GridCell({
 }) {
   const ref = useRef<THREE.Group>(null!);
   const dive = useSelectionStore((s) => s.selected);
+  const editorial = useSelectionStore((s) => s.editorial);
   const isSelected = dive?.name === slot.name;
   const isAnyDive = dive !== null;
 
   useFrame((_, delta) => {
     const g = ref.current;
     if (!g) return;
-    const tx = isSelected ? DIVE_TARGET[0] : gridX;
-    const ty = isSelected ? DIVE_TARGET[1] : gridY;
-    const tz = isSelected ? DIVE_TARGET[2] : 0;
-    const ts = isSelected ? DIVE_SCALE : isAnyDive ? 0 : GRID_SCALE;
+
+    let tx = gridX;
+    let ty = gridY;
+    let tz = 0;
+    let ts = GRID_SCALE;
+
+    if (editorial) {
+      // Editorial mode hides every grid icon — they squish to nothing.
+      ts = 0;
+    } else if (isSelected) {
+      // Diving INTO this icon: pull it to the dive spot at full size.
+      tx = DIVE_TARGET[0];
+      ty = DIVE_TARGET[1];
+      tz = DIVE_TARGET[2];
+      ts = DIVE_SCALE;
+    } else if (isAnyDive && dive) {
+      // Camera-dolly feel: every other icon flies outward, away from the
+      // selected icon's grid position, past the camera frame.
+      const sel = GRID.find((s) => s.name === dive.name);
+      const sx = sel ? (sel.col - 1) * CELL : 0;
+      const sy = sel ? sel.row * CELL : 0;
+      const dx = gridX - sx;
+      const dy = gridY - sy;
+      const len = Math.hypot(dx, dy) || 1;
+      tx = gridX + (dx / len) * ESCAPE_DISTANCE;
+      ty = gridY + (dy / len) * ESCAPE_DISTANCE;
+      ts = GRID_SCALE;
+    }
 
     g.position.x = THREE.MathUtils.damp(g.position.x, tx, LAMBDA, delta);
     g.position.y = THREE.MathUtils.damp(g.position.y, ty, LAMBDA, delta);
