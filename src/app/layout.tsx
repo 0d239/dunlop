@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { themeBootScript } from '@/lib/state/useThemeStore';
+import ThemeBoot from '@/components/theme/ThemeBoot';
 
 export const metadata: Metadata = {
   title: 'Dunlop',
@@ -14,7 +16,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="h-full bg-[#0d0a08] text-[#f5f1ea]">{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
+      <body className="h-full bg-white text-neutral-900 dark:bg-[#0d0a08] dark:text-[#f5f1ea]">
+        <ThemeBoot />
+        {children}
+      </body>
     </html>
   );
 }

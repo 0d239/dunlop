@@ -7,6 +7,7 @@ import {
   useSelectionStore,
   type SelectionCategory,
 } from '@/lib/state/useSelectionStore';
+import { useThemeStore } from '@/lib/state/useThemeStore';
 
 export type InteractableProps = {
   name: string;
@@ -14,15 +15,18 @@ export type InteractableProps = {
   onSelect?: (name: string) => void;
 };
 
-export const EDGE_DEFAULT = '#ffffff';
 export const EDGE_ACTIVE = '#EF0000';
+const EDGE_DARK = '#ffffff';
+const EDGE_LIGHT = '#0a0a0a';
+const FILL_DARK = '#000000';
+const FILL_LIGHT = '#ffffff';
 
 /**
  * Shared hover/click hook for every interactable object.
  *
- * Returns event handlers, a `hovered` flag, an `active` flag (true when this
- * object is the current selection), and a <Label /> element to render on
- * hover.
+ * Returns event handlers, hover/active flags, the themed `edge` stroke color
+ * (red on hover/active, otherwise theme-default), the themed `fill` color
+ * for body meshes, and a <Label /> rendered on hover.
  */
 export function useInteractable(
   { name, category, onSelect }: InteractableProps,
@@ -32,6 +36,14 @@ export function useInteractable(
   const select = useSelectionStore((s) => s.select);
   const setStoreHover = useSelectionStore((s) => s.setHovered);
   const active = useSelectionStore((s) => s.selected?.name === name);
+  const theme = useThemeStore((s) => s.theme);
+
+  const edgeBase = theme === 'dark' ? EDGE_DARK : EDGE_LIGHT;
+  const edge = hovered || active ? EDGE_ACTIVE : edgeBase;
+  const fill = theme === 'dark' ? FILL_DARK : FILL_LIGHT;
+  const labelBg =
+    theme === 'dark' ? 'rgba(0,0,0,0.78)' : 'rgba(255,255,255,0.85)';
+  const labelFg = theme === 'dark' ? '#f5f1ea' : '#0a0a0a';
 
   const onPointerOver = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
@@ -76,8 +88,8 @@ export function useInteractable(
     >
       <div
         style={{
-          background: 'rgba(0,0,0,0.78)',
-          color: '#f5f1ea',
+          background: labelBg,
+          color: labelFg,
           padding: '3px 8px',
           borderRadius: 3,
           fontSize: 10,
@@ -93,10 +105,5 @@ export function useInteractable(
     </Html>
   ) : null;
 
-  return { hovered, active, handlers, Label };
-}
-
-/** Pick the edge color for an object based on hover/selection state. */
-export function edgeColor(hovered: boolean, active: boolean) {
-  return hovered || active ? EDGE_ACTIVE : EDGE_DEFAULT;
+  return { hovered, active, handlers, Label, edge, fill };
 }

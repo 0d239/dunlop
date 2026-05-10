@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrthographicCamera } from '@react-three/drei';
-import { Suspense, useLayoutEffect, useRef } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 import Environment from './Environment';
@@ -10,6 +10,7 @@ import Interactables from './Interactables';
 import LogoSign from './LogoSign';
 import HeritageBoard from '@/components/heritage/HeritageBoard';
 import { useSelectionStore } from '@/lib/state/useSelectionStore';
+import { useThemeStore } from '@/lib/state/useThemeStore';
 
 const GRID_WIDTH = 13;
 const GRID_HEIGHT = 16;
@@ -26,9 +27,6 @@ export default function RoomScene() {
     <Canvas
       dpr={[1, 2]}
       gl={{ antialias: true }}
-      onCreated={({ scene }) => {
-        scene.background = new THREE.Color('#000000');
-      }}
       onPointerMissed={() => {
         select(null);
         closeEditorial();
@@ -48,6 +46,7 @@ export default function RoomScene() {
         editorialCenterY={EDITORIAL_CENTER_Y}
         diveCenterY={DIVE_CENTER_Y}
       />
+      <ThemedSceneBackground />
 
       <Suspense fallback={null}>
         <Environment />
@@ -114,5 +113,15 @@ function CameraDriver({
     ortho.updateProjectionMatrix();
   });
 
+  return null;
+}
+
+/** Drives scene.background from the theme store so light/dark flips swap it. */
+function ThemedSceneBackground() {
+  const { scene } = useThree();
+  const theme = useThemeStore((s) => s.theme);
+  useEffect(() => {
+    scene.background = new THREE.Color(theme === 'dark' ? '#000000' : '#ffffff');
+  }, [scene, theme]);
   return null;
 }

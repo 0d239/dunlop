@@ -3,21 +3,19 @@
 import { Edges } from '@react-three/drei';
 import {
   useInteractable,
-  edgeColor,
   type InteractableProps,
 } from '../useInteractable';
 
 /** Vertical board with a few pegs sticking out. */
 export default function Pegboard(props: InteractableProps) {
-  const { hovered, active, handlers, Label } = useInteractable(props, [0, 1.2, 0]);
-  const c = edgeColor(hovered, active);
+  const { handlers, Label, edge: c, fill } = useInteractable(props, [0, 1.2, 0]);
 
   return (
     <group {...handlers}>
       {/* Board (thin box, presented as a face) */}
       <mesh>
         <boxGeometry args={[2.6, 1.4, 0.06]} />
-        <meshBasicMaterial color="#000" />
+        <meshBasicMaterial color={fill} />
         <Edges color={c} />
       </mesh>
       {/* Pegs */}
@@ -31,7 +29,7 @@ export default function Pegboard(props: InteractableProps) {
       ].map(([x, y], i) => (
         <mesh key={i} position={[x, y, 0.18]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.04, 0.04, 0.3, 6]} />
-          <meshBasicMaterial color="#000" />
+          <meshBasicMaterial color={fill} />
           <Edges color={c} />
         </mesh>
       ))}

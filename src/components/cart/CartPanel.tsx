@@ -37,7 +37,7 @@ export default function CartPanel() {
   return (
     <section
       aria-hidden={!open}
-      className={`pointer-events-auto fixed bottom-16 left-0 right-0 z-30 flex max-h-[60vh] flex-col border-t border-white/15 bg-black/95 backdrop-blur transition-transform duration-300 ease-out ${
+      className={`pointer-events-auto fixed bottom-16 left-0 right-0 z-30 flex max-h-[60vh] flex-col border-t border-black/15 bg-white/95 backdrop-blur transition-transform duration-300 ease-out dark:border-white/15 dark:bg-black/95 ${
         open ? 'translate-y-0' : 'translate-y-full'
       }`}
     >
@@ -45,12 +45,12 @@ export default function CartPanel() {
         <CheckoutStub onBack={() => setView('cart')} />
       ) : (
         <>
-          <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+          <header className="flex items-center justify-between border-b border-black/10 px-6 py-4 dark:border-white/10">
             <div className="flex items-baseline gap-3">
-              <h3 className="text-[11px] uppercase tracking-[0.3em] text-white">
+              <h3 className="text-[11px] uppercase tracking-[0.3em] text-neutral-950 dark:text-white">
                 Basket
               </h3>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-600">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-600">
                 {itemCount} {itemCount === 1 ? 'item' : 'items'}
               </div>
             </div>
@@ -58,7 +58,7 @@ export default function CartPanel() {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close basket"
-              className="rounded-full border border-white/15 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-neutral-400 transition hover:border-[#EF0000] hover:text-[#EF0000]"
+              className="rounded-full border border-black/15 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-neutral-600 transition hover:border-[#EF0000] hover:text-[#EF0000] dark:border-white/15 dark:text-neutral-400"
             >
               Close
             </button>
@@ -67,7 +67,7 @@ export default function CartPanel() {
           {lines.length === 0 ? (
             <div className="flex flex-1 items-center justify-center px-6 py-12 text-center">
               <div>
-                <div className="text-[10px] uppercase tracking-[0.3em] text-neutral-600">
+                <div className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-600">
                   Empty
                 </div>
                 <div className="mt-3 text-sm text-neutral-500">
@@ -76,7 +76,7 @@ export default function CartPanel() {
               </div>
             </div>
           ) : (
-            <ul className="flex-1 divide-y divide-white/5 overflow-y-auto">
+            <ul className="flex-1 divide-y divide-black/5 overflow-y-auto dark:divide-white/5">
               {lines.map((line) => {
                 const lineTotal = line.product.priceCents * line.qty;
                 return (
@@ -84,7 +84,7 @@ export default function CartPanel() {
                     key={line.product.id}
                     className="flex items-center gap-4 px-6 py-3"
                   >
-                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded border border-white/10 bg-black">
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded border border-black/10 bg-white dark:border-white/10 dark:bg-black">
                       {line.product.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -95,24 +95,24 @@ export default function CartPanel() {
                       ) : null}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] text-white">
+                      <div className="truncate text-[13px] text-neutral-950 dark:text-white">
                         {line.product.name}
                       </div>
                       {line.product.brand ? (
-                        <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-600">
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-600">
                           {line.product.brand}
                         </div>
                       ) : null}
                     </div>
 
-                    <div className="flex items-center gap-1 text-[11px] text-neutral-300">
+                    <div className="flex items-center gap-1 text-[11px] text-neutral-700 dark:text-neutral-300">
                       <button
                         type="button"
                         aria-label="Decrease quantity"
                         onClick={() =>
                           setQty(line.product.id, line.qty - 1)
                         }
-                        className="h-7 w-7 rounded border border-white/15 transition hover:border-[#EF0000] hover:text-[#EF0000]"
+                        className="h-7 w-7 rounded border border-black/15 transition hover:border-[#EF0000] hover:text-[#EF0000] dark:border-white/15"
                       >
                         −
                       </button>
@@ -125,13 +125,13 @@ export default function CartPanel() {
                         onClick={() =>
                           setQty(line.product.id, line.qty + 1)
                         }
-                        className="h-7 w-7 rounded border border-white/15 transition hover:border-[#EF0000] hover:text-[#EF0000]"
+                        className="h-7 w-7 rounded border border-black/15 transition hover:border-[#EF0000] hover:text-[#EF0000] dark:border-white/15"
                       >
                         +
                       </button>
                     </div>
 
-                    <div className="w-16 text-right text-[12px] tabular-nums text-neutral-300">
+                    <div className="w-16 text-right text-[12px] tabular-nums text-neutral-700 dark:text-neutral-300">
                       {formatCents(lineTotal)}
                     </div>
 
@@ -139,7 +139,7 @@ export default function CartPanel() {
                       type="button"
                       onClick={() => remove(line.product.id)}
                       aria-label={`Remove ${line.product.name}`}
-                      className="text-[14px] text-neutral-600 transition hover:text-[#EF0000]"
+                      className="text-[14px] text-neutral-400 transition hover:text-[#EF0000] dark:text-neutral-600"
                     >
                       ✕
                     </button>
@@ -149,12 +149,12 @@ export default function CartPanel() {
             </ul>
           )}
 
-          <footer className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+          <footer className="flex items-center justify-between border-t border-black/10 px-6 py-4 dark:border-white/10">
             <div className="flex items-baseline gap-3">
               <div className="text-[10px] uppercase tracking-[0.3em] text-neutral-500">
                 Subtotal
               </div>
-              <div className="text-base tabular-nums text-white">
+              <div className="text-base tabular-nums text-neutral-950 dark:text-white">
                 {formatCents(subtotal)}
               </div>
             </div>
@@ -162,7 +162,7 @@ export default function CartPanel() {
               type="button"
               disabled={lines.length === 0}
               onClick={() => setView('checkout-stub')}
-              className="rounded-full border border-white/20 px-6 py-2 text-[11px] uppercase tracking-[0.3em] text-neutral-200 transition hover:border-[#EF0000] hover:text-[#EF0000] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/20 disabled:hover:text-neutral-200"
+              className="rounded-full border border-black/20 px-6 py-2 text-[11px] uppercase tracking-[0.3em] text-neutral-800 transition hover:border-[#EF0000] hover:text-[#EF0000] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-black/20 disabled:hover:text-neutral-800 dark:border-white/20 dark:text-neutral-200 dark:disabled:hover:border-white/20 dark:disabled:hover:text-neutral-200"
             >
               Checkout
             </button>
@@ -176,7 +176,7 @@ export default function CartPanel() {
 function CheckoutStub({ onBack }: { onBack: () => void }) {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+      <header className="flex items-center justify-between border-b border-black/10 px-6 py-4 dark:border-white/10">
         <button
           type="button"
           onClick={onBack}
@@ -193,10 +193,10 @@ function CheckoutStub({ onBack }: { onBack: () => void }) {
           <div className="text-[10px] uppercase tracking-[0.3em] text-[#EF0000]">
             Coming soon
           </div>
-          <h4 className="mt-3 text-2xl uppercase tracking-wide text-white">
+          <h4 className="mt-3 text-2xl uppercase tracking-wide text-neutral-950 dark:text-white">
             Custom checkout
           </h4>
-          <p className="mt-4 text-sm leading-relaxed text-neutral-400">
+          <p className="mt-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
             Contact, shipping, payment, and order placement will run inline
             in this frame — same BigCommerce backend, our UI. Until then,
             the basket is local and won&apos;t be charged.
