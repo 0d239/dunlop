@@ -1,14 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelectionStore } from '@/lib/state/useSelectionStore';
 import { PRODUCTS_BY_CATEGORY } from '@/data/products';
+import { CATEGORY_ORDER, CATEGORY_LABELS } from '@/lib/categories';
 
 export default function DivePanel() {
   const dive = useSelectionStore((s) => s.selected);
   const select = useSelectionStore((s) => s.select);
   const selectProduct = useSelectionStore((s) => s.selectProduct);
   const step = useSelectionStore((s) => s.step);
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const open = dive !== null;
   const products = dive ? PRODUCTS_BY_CATEGORY[dive.category] : [];
@@ -17,16 +21,40 @@ export default function DivePanel() {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        select(null);
+        if (dropdownOpen) {
+          setDropdownOpen(false);
+        } else {
+          select(null);
+        }
         return;
       }
+      if (dropdownOpen) return;
       if (e.target instanceof HTMLInputElement) return;
       if (e.key === 'ArrowLeft') step(-1);
       else if (e.key === 'ArrowRight') step(1);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, select, step]);
+  }, [open, dropdownOpen, select, step]);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        e.target instanceof Node &&
+        !dropdownRef.current.contains(e.target)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', onDown);
+    return () => window.removeEventListener('mousedown', onDown);
+  }, [dropdownOpen]);
+
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [dive?.category]);
 
   return (
     <aside
@@ -40,7 +68,7 @@ export default function DivePanel() {
           <div className="text-[10px] uppercase tracking-[0.3em] text-neutral-500">
             Category
           </div>
-          <div className="mt-1 flex items-center gap-3">
+          <div ref={dropdownRef} className="relative mt-1 flex items-center gap-3">
             <button
               type="button"
               onClick={() => step(-1)}
@@ -49,9 +77,16 @@ export default function DivePanel() {
             >
               ‹
             </button>
-            <h2 className="text-2xl uppercase tracking-wide text-white">
+            <button
+              type="button"
+              onClick={() => setDropdownOpen((v) => !v)}
+              aria-haspopup="listbox"
+              aria-expanded={dropdownOpen}
+              className="flex items-center gap-2 text-2xl uppercase tracking-wide text-white transition hover:text-[#EF0000]"
+            >
               {dive?.name ?? ''}
-            </h2>
+              <span aria-hidden className="text-base text-neutral-500">▾</span>
+            </button>
             <button
               type="button"
               onClick={() => step(1)}
@@ -60,6 +95,43 @@ export default function DivePanel() {
             >
               ›
             </button>
+
+            {dropdownOpen ? (
+              <ul
+                role="listbox"
+                className="absolute left-0 top-full z-40 mt-2 min-w-[220px] overflow-hidden rounded border border-white/15 bg-black/95 py-1 shadow-xl backdrop-blur"
+              >
+                {CATEGORY_ORDER.map((cat) => {
+                  const count = PRODUCTS_BY_CATEGORY[cat].length;
+                  const empty = count === 0;
+                  const active = cat === dive?.category;
+                  return (
+                    <li key={cat}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        onClick={() =>
+                          select({ category: cat, name: CATEGORY_LABELS[cat] })
+                        }
+                        className={`flex w-full items-center justify-between gap-6 px-4 py-2 text-left text-[11px] uppercase tracking-[0.2em] transition ${
+                          active
+                            ? 'text-[#EF0000]'
+                            : empty
+                              ? 'italic text-neutral-600 hover:text-neutral-400'
+                              : 'text-neutral-300 hover:text-white'
+                        }`}
+                      >
+                        <span>{CATEGORY_LABELS[cat]}</span>
+                        <span className="tabular-nums text-neutral-600">
+                          {count}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
           </div>
           <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-neutral-600">
             {products.length} {products.length === 1 ? 'item' : 'items'}
