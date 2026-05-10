@@ -1,6 +1,8 @@
 import RoomSceneClient from '@/components/room/RoomSceneClient';
 import CartBar from '@/components/cart/CartBar';
+import CartPanel from '@/components/cart/CartPanel';
 import DivePanel from '@/components/dive/DivePanel';
+import ProductPanel from '@/components/dive/ProductPanel';
 
 export default function HomePage() {
   return (
@@ -9,6 +11,8 @@ export default function HomePage() {
         <RoomSceneClient />
       </div>
       <DivePanel />
+      <ProductPanel />
+      <CartPanel />
       <CartBar />
     </main>
   );

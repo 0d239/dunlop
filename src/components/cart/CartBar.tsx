@@ -1,13 +1,26 @@
 'use client';
 
-import { useCartStore, selectItemCount } from '@/lib/state/useCartStore';
+import {
+  useCartStore,
+  selectItemCount,
+} from '@/lib/state/useCartStore';
 
 export default function CartBar() {
   const itemCount = useCartStore(selectItemCount);
+  const open = useCartStore((s) => s.open);
+  const toggleOpen = useCartStore((s) => s.toggleOpen);
+  const setOpen = useCartStore((s) => s.setOpen);
+  const setView = useCartStore((s) => s.setView);
 
   return (
-    <div className="pointer-events-auto flex h-16 w-full shrink-0 items-center justify-between border-t border-white/15 bg-black px-6 text-xs uppercase tracking-[0.3em]">
-      <div className="flex items-center gap-3 text-neutral-300">
+    <div className="pointer-events-auto relative z-40 flex h-16 w-full shrink-0 items-center justify-between border-t border-white/15 bg-black px-6 text-xs uppercase tracking-[0.3em]">
+      <button
+        type="button"
+        onClick={toggleOpen}
+        aria-expanded={open}
+        aria-label={open ? 'Close basket' : 'Open basket'}
+        className="flex items-center gap-3 text-neutral-300 transition hover:text-[#EF0000]"
+      >
         <BasketIcon />
         <span>Basket</span>
         {itemCount > 0 && (
@@ -19,10 +32,17 @@ export default function CartBar() {
         <span className="text-neutral-500">
           {itemCount} {itemCount === 1 ? 'item' : 'items'}
         </span>
-      </div>
+        <span className="ml-2 text-[10px] text-neutral-600">
+          {open ? '▼' : '▲'}
+        </span>
+      </button>
       <button
         type="button"
         disabled={itemCount === 0}
+        onClick={() => {
+          setOpen(true);
+          setView('checkout-stub');
+        }}
         className="rounded-full border border-white/20 px-5 py-2 text-neutral-300 transition hover:border-[#EF0000] hover:text-[#EF0000] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/20 disabled:hover:text-neutral-300"
       >
         Checkout

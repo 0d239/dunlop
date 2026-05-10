@@ -2,18 +2,16 @@
 
 import { useEffect } from 'react';
 import { useSelectionStore } from '@/lib/state/useSelectionStore';
-import { useCartStore } from '@/lib/state/useCartStore';
 import { PRODUCTS_BY_CATEGORY } from '@/data/products';
 
 export default function DivePanel() {
   const dive = useSelectionStore((s) => s.selected);
   const select = useSelectionStore((s) => s.select);
-  const add = useCartStore((s) => s.add);
+  const selectProduct = useSelectionStore((s) => s.selectProduct);
 
   const open = dive !== null;
   const products = dive ? PRODUCTS_BY_CATEGORY[dive.category] : [];
 
-  // ESC closes the dive
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -38,12 +36,15 @@ export default function DivePanel() {
           <h2 className="mt-1 text-2xl uppercase tracking-wide text-white">
             {dive?.name ?? ''}
           </h2>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-neutral-600">
+            {products.length} {products.length === 1 ? 'item' : 'items'}
+          </div>
         </div>
         <button
           type="button"
           onClick={() => select(null)}
           aria-label="Close"
-          className="rounded-full border border-white/15 px-3 py-1 text-xs text-neutral-400 transition hover:border-[#EF0000] hover:text-[#EF0000]"
+          className="rounded-full border border-white/15 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-neutral-400 transition hover:border-[#EF0000] hover:text-[#EF0000]"
         >
           ESC
         </button>
@@ -53,7 +54,7 @@ export default function DivePanel() {
         {products.length === 0 ? (
           <div className="flex h-full items-center justify-center p-12 text-center">
             <div>
-              <div className="text-xs uppercase tracking-[0.3em] text-neutral-600">
+              <div className="text-[10px] uppercase tracking-[0.3em] text-neutral-600">
                 Coming soon
               </div>
               <div className="mt-3 text-sm text-neutral-500">
@@ -64,27 +65,36 @@ export default function DivePanel() {
         ) : (
           <ul className="divide-y divide-white/5">
             {products.map((p) => (
-              <li key={p.id} className="flex items-center gap-4 p-4">
-                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded border border-white/10 bg-black">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="truncate text-sm text-white">{p.name}</div>
-                  <div className="text-xs text-neutral-500">
-                    {p.priceFormatted}
-                  </div>
-                </div>
+              <li key={p.id}>
                 <button
                   type="button"
-                  onClick={() => add(p)}
-                  className="rounded-full border border-white/20 px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition hover:border-[#EF0000] hover:text-[#EF0000]"
+                  onClick={() => selectProduct(p.id)}
+                  className="group flex w-full items-center gap-4 px-5 py-3 text-left transition hover:bg-white/[0.03]"
                 >
-                  Add
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded border border-white/10 bg-black">
+                    {p.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] text-white group-hover:text-[#EF0000]">
+                      {p.name}
+                    </div>
+                    {p.brand ? (
+                      <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-600">
+                        {p.brand}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="text-[11px] tabular-nums text-neutral-400">
+                    {p.priceFormatted}
+                  </div>
                 </button>
               </li>
             ))}

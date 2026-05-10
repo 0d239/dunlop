@@ -6,16 +6,25 @@ export type CartLine = {
   qty: number;
 };
 
+export type CartView = 'cart' | 'checkout-stub';
+
 type CartStore = {
   lines: CartLine[];
+  open: boolean;
+  view: CartView;
   add: (product: Product) => void;
   remove: (productId: string) => void;
   setQty: (productId: string, qty: number) => void;
   clear: () => void;
+  setOpen: (open: boolean) => void;
+  toggleOpen: () => void;
+  setView: (view: CartView) => void;
 };
 
 export const useCartStore = create<CartStore>((set) => ({
   lines: [],
+  open: false,
+  view: 'cart',
   add: (product) =>
     set((s) => {
       const existing = s.lines.find((l) => l.product.id === product.id);
@@ -39,6 +48,10 @@ export const useCartStore = create<CartStore>((set) => ({
           ),
     })),
   clear: () => set({ lines: [] }),
+  setOpen: (open) => set({ open, view: open ? 'cart' : 'cart' }),
+  toggleOpen: () =>
+    set((s) => ({ open: !s.open, view: s.open ? 'cart' : 'cart' })),
+  setView: (view) => set({ view }),
 }));
 
 export const selectItemCount = (s: CartStore) =>
