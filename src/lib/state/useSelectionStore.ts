@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { CATEGORY_LABELS, stepCategory } from '@/lib/categories';
 
 export type SelectionCategory =
   | 'picks'
@@ -26,15 +27,25 @@ type SelectionStore = {
   setHovered: (name: string | null) => void;
   openEditorial: () => void;
   closeEditorial: () => void;
+  step: (dir: 1 | -1) => void;
 };
 
-export const useSelectionStore = create<SelectionStore>((set) => ({
+export const useSelectionStore = create<SelectionStore>((set, get) => ({
   selected: null,
   selectedProductId: null,
   hovered: null,
   editorial: false,
   select: (selection) =>
     set({ selected: selection, selectedProductId: null }),
+  step: (dir) => {
+    const current = get().selected;
+    if (!current) return;
+    const next = stepCategory(current.category, dir);
+    set({
+      selected: { category: next, name: CATEGORY_LABELS[next] },
+      selectedProductId: null,
+    });
+  },
   selectProduct: (id) => set({ selectedProductId: id }),
   setHovered: (name) => set({ hovered: name }),
   openEditorial: () =>
