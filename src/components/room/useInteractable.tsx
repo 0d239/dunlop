@@ -13,6 +13,7 @@ export type InteractableProps = {
   name: string;
   category: SelectionCategory;
   onSelect?: (name: string) => void;
+  focused?: boolean;
 };
 
 export const EDGE_ACTIVE = '#EF0000';
@@ -29,7 +30,7 @@ const FILL_LIGHT = '#ffffff';
  * for body meshes, and a <Label /> rendered on hover.
  */
 export function useInteractable(
-  { name, category, onSelect }: InteractableProps,
+  { name, category, onSelect, focused }: InteractableProps,
   labelOffset: [number, number, number] = [0, 1.4, 0],
 ) {
   const [hovered, setHovered] = useState(false);
@@ -39,7 +40,7 @@ export function useInteractable(
   const theme = useThemeStore((s) => s.theme);
 
   const edgeBase = theme === 'dark' ? EDGE_DARK : EDGE_LIGHT;
-  const edge = hovered || active ? EDGE_ACTIVE : edgeBase;
+  const edge = hovered || active || focused ? EDGE_ACTIVE : edgeBase;
   const fill = theme === 'dark' ? FILL_DARK : FILL_LIGHT;
   // Light mode renders wireframe-only: body meshes go fully transparent so
   // only the Edges show. Avoids the cream-halo created by AA between white
