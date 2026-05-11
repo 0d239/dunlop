@@ -4,6 +4,7 @@ import { useCallback, useRef } from 'react';
 import type { ComponentType } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
+import { Edges } from '@react-three/drei';
 import Pick from './objects/Pick';
 import Pedalboard from './objects/Pedalboard';
 import CapoHook from './objects/CapoHook';
@@ -46,25 +47,23 @@ const DIVE_TARGET: [number, number, number] = [-6, 4.5, 1];
 const LAMBDA = 6;
 
 /**
- * Wheel layout when a category is open. All 9 cells park on a circle in the
- * XY plane around DIVE_TARGET. Selected sits at angle 0 (top); ±1 step lands
- * at ±(2π/9), curving down on either side. |offset| > 1 stays parked at
- * scale 0 so it slides naturally back into view as the wheel turns.
+ * Wheel layout when a category is open. Cells orbit a horizontal axle
+ * through the wheel center; the orbit plane is then tilted around the
+ * vertical Y-axis so the front of the orbit lands toward the LEFT of the
+ * scene and the back recedes toward the RIGHT. Active (theta=0) sits at
+ * the front of the orbit and is back-solved to land exactly at
+ * DIVE_TARGET regardless of tilt.
  */
-const WHEEL_RADIUS = 4;
-const WHEEL_FADED_SCALE = 0.4;
-const WHEEL_VISIBLE_OFFSET = 1;
+const WHEEL_RADIUS = 6.5;
+const WHEEL_VISIBLE_OFFSET = 2;
+const WHEEL_TILT_Y = (Math.PI / 180) * 32;
+// Scale by |offset|. Active is large; ±1 reads clearly; ±2 is weak.
+const WHEEL_SCALE_FALLOFF = [1.5, 0.7, 0.22];
 
-/**
- * Invisible click panels behind each visible cell. Bigger than the icons
- * themselves so users can hit them reliably without aiming at the small
- * geometry. Sizes are tuned so adjacent panels meet at the seam (no
- * dead space between the wheel cells), and grid panels don't overlap their
- * 4.5-unit neighbors.
- */
 const GRID_PANEL_SIZE = 3.6;
-const PRIME_PANEL_SIZE = 3.4;
-const SIDE_PANEL_SIZE = 2.0;
+const PRIME_PANEL_SIZE = 4.4;
+const SIDE_PANEL_SIZE = 2.4;
+const FAR_PANEL_SIZE = 1.0;
 
 export default function Interactables() {
   const onSelect = useCallback((name: string) => {
@@ -108,7 +107,10 @@ function GridCell({
   const dive = useSelectionStore((s) => s.selected);
   const editorial = useSelectionStore((s) => s.editorial);
   const select = useSelectionStore((s) => s.select);
+  const gridFocus = useSelectionStore((s) => s.gridFocus);
   const isAnyDive = dive !== null;
+  const myIndex = GRID.findIndex((s) => s.category === slot.category);
+  const isFocused = !isAnyDive && !editorial && gridFocus === myIndex;
 
   // Compute wheel offset once per render so JSX can branch on it.
   let offset: number | null = null;
@@ -122,19 +124,22 @@ function GridCell({
     }
   }
 
+  const absOffset = offset !== null ? Math.abs(offset) : null;
   const isPrime = offset === 0;
-  const isSidePanel =
-    offset !== null && Math.abs(offset) === WHEEL_VISIBLE_OFFSET;
+  const isVisibleWheel =
+    absOffset !== null && absOffset <= WHEEL_VISIBLE_OFFSET;
 
   // Hit panel is rendered when:
   //   - grid mode (no dive): every cell, full grid panel size
-  //   - wheel mode prime / side: visible cells only
+  //   - wheel mode: any cell within WHEEL_VISIBLE_OFFSET, sized by depth
   //   - editorial: never
-  const showPanel = !editorial && (!isAnyDive || isPrime || isSidePanel);
+  const showPanel = !editorial && (!isAnyDive || isVisibleWheel);
   const panelSize = isAnyDive
-    ? isPrime
+    ? absOffset === 0
       ? PRIME_PANEL_SIZE
-      : SIDE_PANEL_SIZE
+      : absOffset === 1
+        ? SIDE_PANEL_SIZE
+        : FAR_PANEL_SIZE
     : GRID_PANEL_SIZE;
 
   useFrame((_, delta) => {
@@ -150,14 +155,23 @@ function GridCell({
     if (editorial) {
       ts = 0;
     } else if (isAnyDive && offset !== null) {
+      const ao = Math.abs(offset);
       const angle = offset * ((2 * Math.PI) / GRID.length);
-      tx = DIVE_TARGET[0] + WHEEL_RADIUS * Math.sin(angle);
-      ty = DIVE_TARGET[1] - WHEEL_RADIUS * (1 - Math.cos(angle));
-      tz = DIVE_TARGET[2];
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const cosB = Math.cos(WHEEL_TILT_Y);
+      const sinB = Math.sin(WHEEL_TILT_Y);
 
-      if (isPrime) ts = DIVE_SCALE;
-      else if (isSidePanel) ts = WHEEL_FADED_SCALE;
-      else ts = 0;
+      // Orbit in YZ plane (X-axis axle), then rotated around the vertical
+      // Y-axis through the wheel center so the front of the orbit lands
+      // toward -X (left, close) and the back toward +X (right, far). Center
+      // is back-solved so theta=0 stays exactly at DIVE_TARGET.
+      tx = DIVE_TARGET[0] + sinB * WHEEL_RADIUS * (1 - cosA);
+      ty = DIVE_TARGET[1] + WHEEL_RADIUS * sinA;
+      tz = DIVE_TARGET[2] + cosB * WHEEL_RADIUS * (cosA - 1);
+
+      ts =
+        ao <= WHEEL_VISIBLE_OFFSET ? (WHEEL_SCALE_FALLOFF[ao] ?? 0) : 0;
     }
 
     p.position.x = THREE.MathUtils.damp(p.position.x, tx, LAMBDA, delta);
@@ -186,8 +200,20 @@ function GridCell({
           <meshBasicMaterial transparent opacity={0} />
         </mesh>
       ) : null}
+      {isFocused ? (
+        <mesh position={[0, 0, -0.39]}>
+          <planeGeometry args={[GRID_PANEL_SIZE, GRID_PANEL_SIZE]} />
+          <meshBasicMaterial transparent opacity={0} />
+          <Edges color="#EF0000" threshold={1} />
+        </mesh>
+      ) : null}
       <group ref={scaleRef} scale={GRID_SCALE}>
-        <Comp name={name} category={category} onSelect={onSelect} />
+        <Comp
+          name={name}
+          category={category}
+          onSelect={onSelect}
+          focused={isFocused}
+        />
       </group>
     </group>
   );
