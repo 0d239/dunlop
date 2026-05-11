@@ -4,6 +4,7 @@ import CartPanel from '@/components/cart/CartPanel';
 import DivePanel from '@/components/dive/DivePanel';
 import ProductPanel from '@/components/dive/ProductPanel';
 import ThemeToggle from '@/components/theme/ThemeToggle';
+import KeyboardController from '@/components/keyboard/KeyboardController';
 
 export default function HomePage() {
   return (
@@ -16,6 +17,7 @@ export default function HomePage() {
       <ProductPanel />
       <CartPanel />
       <CartBar />
+      <KeyboardController />
     </main>
   );
 }

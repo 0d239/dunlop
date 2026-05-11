@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useSelectionStore } from '@/lib/state/useSelectionStore';
+import { useCartStore } from '@/lib/state/useCartStore';
 import { PRODUCTS_BY_CATEGORY } from '@/data/products';
 import { CATEGORY_ORDER, CATEGORY_LABELS } from '@/lib/categories';
 import {
@@ -17,9 +18,14 @@ export default function DivePanel() {
   const select = useSelectionStore((s) => s.select);
   const selectProduct = useSelectionStore((s) => s.selectProduct);
   const step = useSelectionStore((s) => s.step);
+  const divePane = useSelectionStore((s) => s.divePane);
+  const setDivePane = useSelectionStore((s) => s.setDivePane);
+  const itemFocus = useSelectionStore((s) => s.itemFocus);
+  const setItemFocus = useSelectionStore((s) => s.setItemFocus);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const itemRefs = useRef<Array<HTMLLIElement | null>>([]);
 
   const [filters, dispatch] = useReducer(filtersReducer, initialFilters);
 
@@ -50,13 +56,92 @@ export default function DivePanel() {
         return;
       }
       if (dropdownOpen) return;
-      if (e.target instanceof HTMLInputElement) return;
-      if (e.key === 'ArrowLeft') step(-1);
-      else if (e.key === 'ArrowRight') step(1);
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      )
+        return;
+
+      // Items-pane keys are owned here because only DivePanel knows the
+      // filtered list. The categories pane is driven by KeyboardController.
+      if (divePane !== 'items') return;
+
+      const len = filtered.length;
+      if (len === 0) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          setDivePane('categories');
+        }
+        return;
+      }
+      const cur = itemFocus ?? 0;
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setItemFocus(Math.min(len - 1, cur + 1));
+          return;
+        case 'ArrowUp':
+          e.preventDefault();
+          setItemFocus(Math.max(0, cur - 1));
+          return;
+        case 'ArrowLeft':
+          e.preventDefault();
+          setDivePane('categories');
+          return;
+        case 'ArrowRight': {
+          e.preventDefault();
+          const product = filtered[cur];
+          if (product) selectProduct(product.id);
+          return;
+        }
+        case 'Enter': {
+          e.preventDefault();
+          const product = filtered[cur];
+          if (product) useCartStore.getState().add(product);
+          return;
+        }
+        case 'Backspace': {
+          e.preventDefault();
+          const product = filtered[cur];
+          if (product) useCartStore.getState().remove(product.id);
+          return;
+        }
+        default:
+          return;
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, dropdownOpen, select, step]);
+  }, [
+    open,
+    dropdownOpen,
+    select,
+    step,
+    divePane,
+    filtered,
+    itemFocus,
+    setDivePane,
+    setItemFocus,
+    selectProduct,
+  ]);
+
+  // Clamp itemFocus when the filtered list shrinks (e.g. user types in search).
+  useEffect(() => {
+    if (itemFocus === null) return;
+    if (filtered.length === 0) {
+      setItemFocus(null);
+      return;
+    }
+    if (itemFocus >= filtered.length) setItemFocus(filtered.length - 1);
+  }, [filtered, itemFocus, setItemFocus]);
+
+  // Scroll the focused row into view when keyboard navigation moves it.
+  useEffect(() => {
+    if (divePane !== 'items' || itemFocus === null) return;
+    const el = itemRefs.current[itemFocus];
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [divePane, itemFocus]);
 
   useEffect(() => {
     if (!dropdownOpen) return;
@@ -88,7 +173,12 @@ export default function DivePanel() {
         open ? 'translate-x-0' : 'translate-x-full'
       }`}
     >
-      <header className="flex items-start justify-between border-b border-white/10 p-6">
+      <header
+        onClick={() => setDivePane('categories')}
+        className={`flex items-start justify-between border-b border-white/10 p-6 transition ${
+          divePane === 'categories' ? 'bg-white/[0.03]' : ''
+        }`}
+      >
         <div className="min-w-0 flex-1">
           <div className="text-[10px] uppercase tracking-[0.3em] text-neutral-500">
             Category
@@ -226,7 +316,17 @@ export default function DivePanel() {
         </div>
       ) : null}
 
-      <div className="flex-1 overflow-y-auto">
+      <div
+        onClick={() => {
+          if (filtered.length > 0) {
+            setDivePane('items');
+            if (itemFocus === null) setItemFocus(0);
+          }
+        }}
+        className={`relative flex-1 overflow-y-auto transition ${
+          divePane === 'items' ? 'bg-white/[0.02]' : ''
+        }`}
+      >
         {products.length === 0 ? (
           <div className="flex h-full items-center justify-center p-12 text-center">
             <div>
@@ -255,12 +355,27 @@ export default function DivePanel() {
           </div>
         ) : (
           <ul className="divide-y divide-white/5">
-            {filtered.map((p) => (
-              <li key={p.id}>
+            {filtered.map((p, idx) => {
+              const focused = divePane === 'items' && itemFocus === idx;
+              return (
+              <li
+                key={p.id}
+                ref={(el) => {
+                  itemRefs.current[idx] = el;
+                }}
+              >
                 <button
                   type="button"
-                  onClick={() => selectProduct(p.id)}
-                  className="group flex w-full items-center gap-4 px-5 py-3 text-left transition hover:bg-white/[0.03]"
+                  onClick={() => {
+                    setDivePane('items');
+                    setItemFocus(idx);
+                    selectProduct(p.id);
+                  }}
+                  className={`group flex w-full items-center gap-4 border-l-2 px-5 py-3 text-left transition ${
+                    focused
+                      ? 'border-[#EF0000] bg-white/[0.06]'
+                      : 'border-transparent hover:bg-white/[0.03]'
+                  }`}
                 >
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded border border-white/10 bg-black">
                     {p.image ? (
@@ -288,7 +403,8 @@ export default function DivePanel() {
                   </div>
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>
