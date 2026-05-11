@@ -4,7 +4,6 @@ import { useCallback, useRef } from 'react';
 import type { ComponentType } from 'react';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Edges } from '@react-three/drei';
 import Pick from './objects/Pick';
 import Pedalboard from './objects/Pedalboard';
 import CapoHook from './objects/CapoHook';
@@ -198,13 +197,6 @@ function GridCell({
         <mesh position={[0, 0, -0.4]} onClick={onPanelClick}>
           <planeGeometry args={[panelSize, panelSize]} />
           <meshBasicMaterial transparent opacity={0} />
-        </mesh>
-      ) : null}
-      {isFocused ? (
-        <mesh position={[0, 0, -0.39]}>
-          <planeGeometry args={[GRID_PANEL_SIZE, GRID_PANEL_SIZE]} />
-          <meshBasicMaterial transparent opacity={0} />
-          <Edges color="#EF0000" threshold={1} />
         </mesh>
       ) : null}
       <group ref={scaleRef} scale={GRID_SCALE}>
