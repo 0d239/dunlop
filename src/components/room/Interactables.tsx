@@ -13,7 +13,7 @@ import StringsShelf from './objects/StringsShelf';
 import CableCoil from './objects/CableCoil';
 import StrapDrape from './objects/StrapDrape';
 import Tshirt from './objects/Tshirt';
-import Bookshelf from './objects/Bookshelf';
+import Star from './objects/Star';
 import type { InteractableProps } from './useInteractable';
 import {
   useSelectionStore,
@@ -37,7 +37,7 @@ const GRID: Slot[] = [
   { Comp: CableCoil,    col: 2, row: 1, name: 'Cables',      category: 'cables' },
   { Comp: StrapDrape,   col: 0, row: 0, name: 'Straps',      category: 'straps' },
   { Comp: Tshirt,       col: 1, row: 0, name: 'Apparel',     category: 'apparel' },
-  { Comp: Bookshelf,    col: 2, row: 0, name: 'Artists',     category: 'artists' },
+  { Comp: Star,         col: 2, row: 0, name: 'Artists',     category: 'artists' },
 ];
 
 const CELL = 4.5;

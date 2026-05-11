@@ -1,26 +1,47 @@
 'use client';
 
+import { useMemo } from 'react';
+import * as THREE from 'three';
 import { Edges } from '@react-three/drei';
 import {
   useInteractable,
   type InteractableProps,
 } from '../useInteractable';
 
-/** Folded t-shirt suggestion: a flat folded body with a small drape. */
+/** Front-facing t-shirt silhouette: body with shoulders, sleeves, and V-neck. */
 export default function Tshirt(props: InteractableProps) {
-  const { handlers, Label, edge: c, fill, bodyOpacity } = useInteractable(props, [0, 0.6, 0]);
+  const { handlers, Label, edge: c, fill, bodyOpacity } = useInteractable(
+    props,
+    [0, 0.85, 0],
+  );
+
+  const shape = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(-0.18, 0.55);
+    s.lineTo(0, 0.32);
+    s.lineTo(0.18, 0.55);
+    s.lineTo(0.4, 0.55);
+    s.lineTo(0.78, 0.45);
+    s.lineTo(0.78, 0.15);
+    s.lineTo(0.45, 0.22);
+    s.lineTo(0.45, -0.6);
+    s.lineTo(-0.45, -0.6);
+    s.lineTo(-0.45, 0.22);
+    s.lineTo(-0.78, 0.15);
+    s.lineTo(-0.78, 0.45);
+    s.lineTo(-0.4, 0.55);
+    s.closePath();
+    return s;
+  }, []);
 
   return (
     <group {...handlers}>
       <mesh>
-        <boxGeometry args={[1.05, 0.18, 0.38]} />
+        <extrudeGeometry
+          args={[shape, { depth: 0.08, bevelEnabled: false, curveSegments: 1 }]}
+        />
         <meshBasicMaterial color={fill} transparent opacity={bodyOpacity} />
-        <Edges color={c} />
-      </mesh>
-      <mesh position={[0, -0.28, 0]}>
-        <boxGeometry args={[1.05, 0.4, 0.04]} />
-        <meshBasicMaterial color={fill} transparent opacity={bodyOpacity} />
-        <Edges color={c} />
+        <Edges color={c} threshold={1} />
       </mesh>
       {Label}
     </group>
